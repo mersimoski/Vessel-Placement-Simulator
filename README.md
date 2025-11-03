@@ -42,8 +42,13 @@ BlazorApp/
 ├── Layout/             # Layout components
 │   └── MainLayout.razor
 ├── wwwroot/            # Static files (CSS, JS, images)
-│   └── css/
-│       └── app.css
+│   ├── css/
+│   │   └── app.css
+│   └── js/
+│       └── dragdrop.js  # Drag and drop JavaScript interop
+├── BlazorApp.Tests/    # Unit tests project
+│   ├── PlacedVesselTests.cs
+│   └── FleetApiServiceTests.cs
 ├── Program.cs          # Application entry point
 └── BlazorApp.csproj    # Project file
 ```
@@ -110,28 +115,43 @@ BlazorApp/
 - **Components**: Reusable UI components with encapsulated logic
 - **Pages**: Main application pages that compose components
 
-### Testing Opportunities
+### Testing
 
-While UI components are difficult to test directly, the following can be unit tested:
+The project includes comprehensive unit tests using xUnit. The following areas are tested:
 
 1. **Collision Detection Logic** (`PlacedVessel.OverlapsWith()`)
-   - Test various overlap scenarios
-   - Test non-overlapping vessels
-   - Test edge cases (adjacent vessels, same position)
+   - ✅ Overlap scenarios (vessels that overlap)
+   - ✅ Non-overlapping vessels
+   - ✅ Edge cases (adjacent vessels, same position, rotated vessels)
 
 2. **Bounds Checking** (`PlacedVessel.IsWithinBounds()`)
-   - Test vessels within bounds
-   - Test vessels partially out of bounds
-   - Test vessels completely out of bounds
+   - ✅ Vessels within bounds
+   - ✅ Vessels partially out of bounds
+   - ✅ Vessels completely out of bounds
+   - ✅ Negative coordinates
+   - ✅ Boundary conditions
 
 3. **API Service** (`FleetApiService`)
-   - Mock HttpClient responses
-   - Test error handling scenarios
-   - Test JSON deserialization
+   - ✅ JSON deserialization with correct API structure
+   - ✅ Error handling for invalid JSON
+   - ✅ Empty response handling
+   - ✅ Multiple fleet handling
 
 4. **Position Calculation** (`PlacedVessel.GetOccupiedPositions()`)
-   - Test rotation scenarios
-   - Test different vessel sizes
+   - ✅ Rotation scenarios (normal and rotated)
+   - ✅ Different vessel sizes
+   - ✅ Effective width/height calculations
+
+**Running Tests:**
+```bash
+cd BlazorApp
+dotnet test BlazorApp.Tests/BlazorApp.Tests.csproj
+```
+
+**Test Coverage:**
+- 18 tests for `PlacedVessel` model
+- 5 tests for `FleetApiService` JSON deserialization
+- Total: 24 passing tests
 
 ## API Response Format
 
@@ -187,13 +207,13 @@ While UI components are difficult to test directly, the following can be unit te
 
 Potential improvements for the application:
 
-1. **Unit Tests**: Add xUnit tests for collision detection, bounds checking, and service layer
-2. **Visual Feedback**: Highlight invalid drop zones, show grid coordinates
-3. **Persistence**: Save/load vessel placements (localStorage)
-4. **Animation**: Smooth animations for vessel placement and rotation
-5. **Accessibility**: Improve keyboard navigation and screen reader support
-6. **Performance**: Optimize rendering for large anchorage sizes
-7. **Validation**: Visual feedback for placement attempts (success/failure)
+1. **Visual Feedback**: Highlight invalid drop zones, show grid coordinates
+2. **Persistence**: Save/load vessel placements (localStorage)
+3. **Animation**: Smooth animations for vessel placement and rotation
+4. **Accessibility**: Improve keyboard navigation and screen reader support
+5. **Performance**: Optimize rendering for large anchorage sizes
+6. **Validation**: Visual feedback for placement attempts (success/failure)
+7. **Integration Tests**: Add end-to-end tests for the complete drag-and-drop flow
 
 ## License
 
