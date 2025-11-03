@@ -1,0 +1,79 @@
+@using BlazorApp.Models
+@inject IJSRuntime JSRuntime
+@implements IAsyncDisposable
+
+<div class="draggable-vessel card mb-2" 
+     draggable="true"
+     @ondblclick="HandleDoubleClick"
+     @ref="vesselElement"
+     data-vessel-id="@Vessel.Id">
+    <div class="card-body p-2">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="flex-grow-1">
+                <div class="fw-bold">@Vessel.Designation</div>
+                <small class="text-muted">
+                    @Vessel.EffectiveWidth × @Vessel.EffectiveHeight
+                    @if (Vessel.IsRotated)
+                    {
+                        <span class="badge bg-info ms-1">Rotated</span>
+                    }
+                </small>
+            </div>
+            <div class="vessel-preview">
+                <svg viewBox="0 0 100 100" class="vessel-preview-icon">
+                    <!-- Hull -->
+                    <rect x="20" y="40" width="60" height="30" fill="#dc3545" rx="5"/>
+                    <!-- Superstructure -->
+                    <rect x="30" y="20" width="40" height="25" fill="#ffffff" rx="3"/>
+                    <!-- Windows -->
+                    <circle cx="40" cy="32" r="3" fill="#6c757d"/>
+                    <circle cx="50" cy="32" r="3" fill="#6c757d"/>
+                    <circle cx="60" cy="32" r="3" fill="#6c757d"/>
+                    <!-- Mast -->
+                    <line x1="50" y1="15" x2="50" y2="20" stroke="#6c757d" stroke-width="2"/>
+                    <!-- Water -->
+                    <ellipse cx="50" cy="85" rx="50" ry="10" fill="#0dcaf0" opacity="0.5"/>
+                </svg>
+            </div>
+        </div>
+        <div class="mt-1">
+            <small class="text-muted">Drag to place • Double-click to rotate</small>
+        </div>
+    </div>
+</div>
+
+@code {
+    private ElementReference vesselElement;
+    [Parameter] public AvailableVessel Vessel { get; set; } = null!;
+    [Parameter] public EventCallback<string> OnRotate { get; set; }
+
+    private string? lastVesselData;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        var vesselData = $"{Vessel.Id}|{Vessel.EffectiveWidth}|{Vessel.EffectiveHeight}|{Vessel.IsRotated}|{Vessel.Designation}";
+        
+        // Setup or update drag handler if data changed or first render
+        if (firstRender || vesselData != lastVesselData)
+        {
+            if (vesselElement.Id != null)
+            {
+                await JSRuntime.InvokeVoidAsync("setupDragAndDrop", vesselElement, vesselData);
+                lastVesselData = vesselData;
+                Console.WriteLine($"Setup drag for vessel {Vessel.Id}, rotated={Vessel.IsRotated}, effective={Vessel.EffectiveWidth}x{Vessel.EffectiveHeight}");
+            }
+        }
+    }
+
+    private async Task HandleDoubleClick()
+    {
+        await OnRotate.InvokeAsync(Vessel.Id);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        // Cleanup if needed
+        await Task.CompletedTask;
+    }
+}
+

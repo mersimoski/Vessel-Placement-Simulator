@@ -1,0 +1,316 @@
+@using BlazorApp.Models
+@using Microsoft.JSInterop
+@inject IJSRuntime JSRuntime
+@implements IAsyncDisposable
+
+<div class="anchorage-container">
+    <div class="anchorage-grid" 
+         @ref="gridElement"
+         style="grid-template-columns: repeat(@AnchorageWidth, 1fr); grid-template-rows: repeat(@AnchorageHeight, 1fr);"
+         id="anchorage-grid-@(GetHashCode())">
+        @for (int y = 0; y < AnchorageHeight; y++)
+        {
+            @for (int x = 0; x < AnchorageWidth; x++)
+            {
+                var cellX = x;
+                var cellY = y;
+                <div class="grid-cell drop-zone" 
+                     data-x="@cellX" 
+                     data-y="@cellY"
+                     data-grid-x="@cellX"
+                     data-grid-y="@cellY">
+                </div>
+            }
+        }
+
+        @foreach (var vessel in PlacedVessels)
+        {
+            var colStart = vessel.X + 1;
+            var colEnd = vessel.X + vessel.EffectiveWidth + 1;
+            var rowStart = vessel.Y + 1;
+            var rowEnd = vessel.Y + vessel.EffectiveHeight + 1;
+            
+            <div class="placed-vessel"
+                 style="grid-column-start: @colStart; grid-column-end: @colEnd; grid-row-start: @rowStart; grid-row-end: @rowEnd;"
+                 @onclick="@(() => HandleVesselClick(vessel.Id))">
+                @{
+                    // Calculate viewBox to exactly match vessel proportions
+                    // Use a scale factor to make numbers reasonable (multiply dimensions by 10)
+                    var width = vessel.EffectiveWidth;
+                    var height = vessel.EffectiveHeight;
+                    var scale = 10.0;
+                    var viewBoxWidth = width * scale;
+                    var viewBoxHeight = height * scale;
+                }
+                <div class="vessel-content">
+                    @if (width >= height)
+                    {
+                        <!-- Horizontal vessel (wider than tall) -->
+                        <svg viewBox="0 0 @(viewBoxWidth) @(viewBoxHeight)" class="vessel-icon" preserveAspectRatio="xMidYMid meet">
+                            <!-- Hull -->
+                            <rect x="@(viewBoxWidth * 0.05)" y="@(viewBoxHeight * 0.33)" width="@(viewBoxWidth * 0.9)" height="@(viewBoxHeight * 0.42)" fill="#dc3545" rx="@(viewBoxWidth * 0.04)"/>
+                            <!-- Superstructure -->
+                            <rect x="@(viewBoxWidth * 0.1)" y="@(viewBoxHeight * 0.08)" width="@(viewBoxWidth * 0.8)" height="@(viewBoxHeight * 0.33)" fill="#ffffff" rx="@(viewBoxWidth * 0.02)"/>
+                            <!-- Windows -->
+                            @for (int i = 0; i < Math.Min(5, width); i++)
+                            {
+                                var windowX = viewBoxWidth * (0.2 + (i * 0.15));
+                                <circle cx="@windowX" cy="@(viewBoxHeight * 0.25)" r="@(viewBoxWidth * 0.025)" fill="#6c757d"/>
+                            }
+                            <!-- Mast -->
+                            <line x1="@(viewBoxWidth * 0.5)" y1="0" x2="@(viewBoxWidth * 0.5)" y2="@(viewBoxHeight * 0.08)" stroke="#6c757d" stroke-width="@(viewBoxWidth * 0.015)"/>
+                            <!-- Water -->
+                            <ellipse cx="@(viewBoxWidth * 0.5)" cy="@(viewBoxHeight * 0.92)" rx="@(viewBoxWidth * 0.5)" ry="@(viewBoxHeight * 0.08)" fill="#0dcaf0" opacity="0.5"/>
+                        </svg>
+                    }
+                    else
+                    {
+                        <!-- Vertical vessel (taller than wide) -->
+                        <svg viewBox="0 0 @(viewBoxWidth) @(viewBoxHeight)" class="vessel-icon" preserveAspectRatio="xMidYMid meet">
+                            <!-- Hull -->
+                            <rect x="@(viewBoxWidth * 0.33)" y="@(viewBoxHeight * 0.05)" width="@(viewBoxWidth * 0.42)" height="@(viewBoxHeight * 0.9)" fill="#dc3545" rx="@(viewBoxHeight * 0.04)"/>
+                            <!-- Superstructure -->
+                            <rect x="@(viewBoxWidth * 0.08)" y="@(viewBoxHeight * 0.1)" width="@(viewBoxWidth * 0.33)" height="@(viewBoxHeight * 0.8)" fill="#ffffff" rx="@(viewBoxHeight * 0.02)"/>
+                            <!-- Windows -->
+                            @for (int i = 0; i < Math.Min(4, height); i++)
+                            {
+                                var windowY = viewBoxHeight * (0.25 + (i * 0.15));
+                                <circle cx="@(viewBoxWidth * 0.25)" cy="@windowY" r="@(viewBoxHeight * 0.025)" fill="#6c757d"/>
+                            }
+                            <!-- Mast -->
+                            <line x1="0" y1="@(viewBoxHeight * 0.5)" x2="@(viewBoxWidth * 0.08)" y2="@(viewBoxHeight * 0.5)" stroke="#6c757d" stroke-width="@(viewBoxHeight * 0.015)"/>
+                            <!-- Water -->
+                            <ellipse cx="@(viewBoxWidth * 0.83)" cy="@(viewBoxHeight * 0.5)" rx="@(viewBoxWidth * 0.08)" ry="@(viewBoxHeight * 0.5)" fill="#0dcaf0" opacity="0.5"/>
+                        </svg>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<div class="mt-2">
+    <small class="text-muted">Click on a placed vessel to remove it</small>
+</div>
+
+@code {
+    private ElementReference gridElement;
+    private DotNetObjectReference<AnchorageGrid>? dotNetHelper;
+    
+    [Parameter] public int AnchorageWidth { get; set; }
+    [Parameter] public int AnchorageHeight { get; set; }
+    [Parameter] public List<PlacedVessel> PlacedVessels { get; set; } = new();
+    [Parameter] public EventCallback<PlacedVessel> OnVesselPlaced { get; set; }
+    [Parameter] public EventCallback<string> OnVesselRemoved { get; set; }
+    
+    private int? previewX;
+    private int? previewY;
+    private int previewWidth;
+    private int previewHeight;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // Only setup drop handlers if we have valid dimensions and this is the first render or dimensions changed
+        if (AnchorageWidth > 0 && AnchorageHeight > 0)
+        {
+            if (firstRender)
+            {
+                dotNetHelper = DotNetObjectReference.Create(this);
+            }
+            
+            // Re-setup handlers if dimensions are valid
+            if (dotNetHelper != null)
+            {
+                await JSRuntime.InvokeVoidAsync("setupGridDropHandlers", gridElement, AnchorageWidth, AnchorageHeight, 
+                    dotNetHelper);
+            }
+        }
+    }
+
+    [JSInvokable]
+    public async Task HandleDropFromJS(int gridX, int gridY, string vesselDataParam)
+    {
+        Console.WriteLine($"HandleDropFromJS called for cell ({gridX}, {gridY})");
+        
+        if (string.IsNullOrEmpty(vesselDataParam)) 
+        {
+            Console.WriteLine("No vessel data found!");
+            return;
+        }
+        
+        await JSRuntime.InvokeVoidAsync("dragDropHelper.clearDragData");
+
+        // Parse vessel data
+        var parts = vesselDataParam.Split('|');
+        if (parts.Length < 5) return;
+
+        var vesselId = parts[0];
+        var effectiveWidth = int.Parse(parts[1]);
+        var effectiveHeight = int.Parse(parts[2]);
+        var isRotated = bool.Parse(parts[3]);
+        var designation = parts[4];
+
+        Console.WriteLine($"Parsed vessel: ID={vesselId}, Size={effectiveWidth}x{effectiveHeight}, Rotated={isRotated}, Designation={designation}");
+
+        // Get original dimensions (before rotation)
+        // The effectiveWidth/effectiveHeight in the drag data already accounts for rotation
+        var originalWidth = isRotated ? effectiveHeight : effectiveWidth;
+        var originalHeight = isRotated ? effectiveWidth : effectiveHeight;
+
+        // Create vessel first to get proper EffectiveWidth/EffectiveHeight
+        var vessel = new PlacedVessel
+        {
+            Id = vesselId,
+            Dimensions = new ShipDimensions { Width = originalWidth, Height = originalHeight },
+            Designation = designation,
+            X = gridX,
+            Y = gridY,
+            IsRotated = isRotated
+        };
+
+        // Use the actual grid cell coordinates where the drop occurred
+        var x = gridX;
+        var y = gridY;
+
+        // Adjust if vessel would go out of bounds using the actual effective dimensions
+        var finalEffectiveWidth = vessel.EffectiveWidth;
+        var finalEffectiveHeight = vessel.EffectiveHeight;
+        
+        if (x + finalEffectiveWidth > AnchorageWidth) 
+        {
+            x = Math.Max(0, AnchorageWidth - finalEffectiveWidth);
+        }
+        if (y + finalEffectiveHeight > AnchorageHeight) 
+        {
+            y = Math.Max(0, AnchorageHeight - finalEffectiveHeight);
+        }
+        if (x < 0) x = 0;
+        if (y < 0) y = 0;
+
+        // Update vessel position
+        vessel.X = x;
+        vessel.Y = y;
+
+        // Check bounds
+        if (!vessel.IsWithinBounds(AnchorageWidth, AnchorageHeight))
+        {
+            return;
+        }
+
+        // Check for overlaps - use the same logic as preview check
+        var vesselPositions = vessel.GetOccupiedPositions();
+        foreach (var existingVessel in PlacedVessels)
+        {
+            if (existingVessel.Id == vessel.Id)
+            {
+                continue; // Skip the same vessel (in case of moving)
+            }
+            
+            var existingPositions = existingVessel.GetOccupiedPositions();
+            if (vesselPositions.Intersect(existingPositions).Any())
+            {
+                return; // Collision detected, can't place
+            }
+        }
+
+        // Check if this vessel ID is already placed - if so, it means we're trying to move it
+        // But since vessels are removed from available when placed, this shouldn't happen for new placements
+        // Only allow moving if dragging from placed vessels (not implemented yet)
+        var existing = PlacedVessels.FirstOrDefault(v => v.Id == vessel.Id);
+        if (existing != null)
+        {
+            // Allow moving by removing the old position first
+            Console.WriteLine($"Moving existing vessel from ({existing.X}, {existing.Y}) to ({x}, {y})");
+            PlacedVessels.Remove(existing);
+        }
+
+        // Debug: Log the placement
+        Console.WriteLine($"Placing vessel at ({x}, {y}) with size {effectiveWidth}x{effectiveHeight}, ID: {vesselId}");
+        
+        await OnVesselPlaced.InvokeAsync(vessel);
+    }
+
+    private async Task HandleVesselClick(string vesselId)
+    {
+        await OnVesselRemoved.InvokeAsync(vesselId);
+    }
+
+    [JSInvokable]
+    public Task<bool> CheckPlacementCollision(int x, int y, int width, int height, string? excludeVesselId = null)
+    {
+        // Check bounds - ensure vessel fits completely within the grid
+        if (x < 0 || y < 0 || x + width > AnchorageWidth || y + height > AnchorageHeight)
+        {
+            Console.WriteLine($"Preview out of bounds: ({x}, {y}) with size {width}x{height}, bounds: {AnchorageWidth}x{AnchorageHeight}");
+            return Task.FromResult(true); // Out of bounds = collision
+        }
+        
+        // Calculate positions this vessel would occupy
+        var tempPositions = new HashSet<(int X, int Y)>();
+        for (int dx = 0; dx < width; dx++)
+        {
+            for (int dy = 0; dy < height; dy++)
+            {
+                var posX = x + dx;
+                var posY = y + dy;
+                // Double-check bounds
+                if (posX >= 0 && posX < AnchorageWidth && posY >= 0 && posY < AnchorageHeight)
+                {
+                    tempPositions.Add((posX, posY));
+                }
+            }
+        }
+        
+        // Check for overlaps with existing vessels (excluding the vessel being moved if specified)
+        foreach (var existingVessel in PlacedVessels)
+        {
+            // Skip the vessel being dragged if it's already placed
+            if (excludeVesselId != null && existingVessel.Id == excludeVesselId)
+            {
+                continue;
+            }
+            
+            // Get positions occupied by existing vessel
+            var existingPositions = existingVessel.GetOccupiedPositions();
+            
+            // Check for any intersection
+            var intersection = tempPositions.Intersect(existingPositions).ToList();
+            if (intersection.Any())
+            {
+                Console.WriteLine($"Preview collision: ({x}, {y}) size {width}x{height} overlaps with vessel at ({existingVessel.X}, {existingVessel.Y}) size {existingVessel.EffectiveWidth}x{existingVessel.EffectiveHeight}. Intersecting positions: {string.Join(", ", intersection.Take(5))}");
+                return Task.FromResult(true); // Collision detected
+            }
+        }
+        
+        Console.WriteLine($"Preview valid: ({x}, {y}) size {width}x{height} - no collisions");
+        return Task.FromResult(false); // No collision
+    }
+    
+    // Preview is now handled entirely in JavaScript, these methods are kept for compatibility but don't trigger renders
+    [JSInvokable]
+    public void ShowDropPreview(int x, int y, int width, int height)
+    {
+        // Preview is handled in JavaScript to avoid re-renders
+        // No state changes needed
+    }
+    
+    [JSInvokable]
+    public void HideDropPreview()
+    {
+        // Preview is handled in JavaScript
+        // No state changes needed
+    }
+    
+    private bool IsPreviewCell(int x, int y)
+    {
+        // Preview is handled in JavaScript via CSS classes
+        return false;
+    }
+    
+    public ValueTask DisposeAsync()
+    {
+        dotNetHelper?.Dispose();
+        return ValueTask.CompletedTask;
+    }
+}
+
