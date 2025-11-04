@@ -46,3 +46,7 @@
 .grid-cell.drop-preview-invalid[b-evq03dzl3i] {
     outline: 2px solid #ef4444;
 }
+
+/* grid container must be positioning context */
+.anchorage-grid[b-evq03dzl3i] { position: relative; }
+

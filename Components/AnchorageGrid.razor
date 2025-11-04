@@ -105,7 +105,7 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        // Only setup drop handlers if we have valid dimensions and this is the first render or dimensions changed
+        // Setup drop handlers on first render or when dimensions change
         if (AnchorageWidth > 0 && AnchorageHeight > 0)
         {
             if (firstRender)
@@ -113,9 +113,10 @@
                 dotNetHelper = DotNetObjectReference.Create(this);
             }
             
-            // Re-setup handlers if dimensions are valid
             if (dotNetHelper != null)
             {
+                // Small delay to ensure DOM is ready
+                await Task.Delay(10);
                 await JSRuntime.InvokeVoidAsync("setupGridDropHandlers", gridElement, AnchorageWidth, AnchorageHeight, 
                     dotNetHelper);
             }
@@ -224,7 +225,15 @@
     [JSInvokable]
     public Task<bool> CheckPlacementCollision(int x, int y, int width, int height, string? excludeVesselId = null)
     {
+        // Ensure we have valid dimensions first
+        if (width <= 0 || height <= 0)
+        {
+            return Task.FromResult(true); // Invalid dimensions = collision
+        }
+        
         // Check bounds - ensure vessel fits completely within the grid
+        // Note: x + width must be <= AnchorageWidth (not >) because if x + width == AnchorageWidth,
+        // that means the vessel occupies cells from x to (x + width - 1), which is the last valid cell
         if (x < 0 || y < 0 || x + width > AnchorageWidth || y + height > AnchorageHeight)
         {
             return Task.FromResult(true); // Out of bounds = collision
@@ -238,7 +247,8 @@
             {
                 var posX = x + dx;
                 var posY = y + dy;
-                // Double-check bounds
+                // Double-check bounds - only add valid positions
+                // This ensures we only check positions that are actually within the grid
                 if (posX >= 0 && posX < AnchorageWidth && posY >= 0 && posY < AnchorageHeight)
                 {
                     tempPositions.Add((posX, posY));
@@ -246,26 +256,38 @@
             }
         }
         
-        // Check for overlaps with existing vessels (excluding the vessel being moved if specified)
-        foreach (var existingVessel in PlacedVessels)
+        // If no valid positions calculated, it's a collision
+        // This should not happen if the bounds check passed, but it's a safety check
+        if (tempPositions.Count == 0)
         {
-            // Skip the vessel being dragged if it's already placed
-            if (excludeVesselId != null && existingVessel.Id == excludeVesselId)
+            return Task.FromResult(true);
+        }
+        
+        // Check for overlaps with existing vessels (excluding the vessel being moved if specified)
+        if (PlacedVessels != null && PlacedVessels.Count > 0)
+        {
+            foreach (var existingVessel in PlacedVessels)
             {
-                continue;
-            }
-            
-            // Get positions occupied by existing vessel
-            var existingPositions = existingVessel.GetOccupiedPositions();
-            
-            // Check for any intersection
-            if (tempPositions.Intersect(existingPositions).Any())
-            {
-                return Task.FromResult(true); // Collision detected
+                // Skip the vessel being dragged if it's already placed (for moving)
+                if (excludeVesselId != null && !string.IsNullOrEmpty(excludeVesselId) && 
+                    existingVessel.Id == excludeVesselId)
+                {
+                    continue;
+                }
+                
+                // Get positions occupied by existing vessel
+                var existingPositions = existingVessel.GetOccupiedPositions();
+                
+                // Check for any intersection
+                if (existingPositions != null && existingPositions.Count > 0 && 
+                    tempPositions.Intersect(existingPositions).Any())
+                {
+                    return Task.FromResult(true); // Collision detected
+                }
             }
         }
         
-        return Task.FromResult(false); // No collision
+        return Task.FromResult(false); // No collision - placement is valid
     }
     
     
