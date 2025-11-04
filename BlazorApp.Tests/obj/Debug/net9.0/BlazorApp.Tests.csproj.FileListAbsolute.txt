@@ -129,3 +129,4 @@ C:\Projects\blazor-app\BlazorApp\BlazorApp.Tests\obj\Debug\net9.0\BlazorApp.Test
 C:\Projects\blazor-app\BlazorApp\BlazorApp.Tests\obj\Debug\net9.0\ref\BlazorApp.Tests.dll
 C:\Projects\blazor-app\BlazorApp\BlazorApp.Tests\bin\Debug\net9.0\xunit.runner.reporters.netcoreapp10.dll
 C:\Projects\blazor-app\BlazorApp\BlazorApp.Tests\bin\Debug\net9.0\xunit.runner.utility.netcoreapp10.dll
+C:\Projects\blazor-app\BlazorApp\BlazorApp.Tests\obj\Debug\net9.0\BlazorApp.Tests.sourcelink.json

@@ -168,7 +168,7 @@ public class PlacedVesselTests
     }
 
     [Fact]
-    public void OverlapsWith_ReturnsTrue_WhenVesselsAreAdjacent()
+    public void OverlapsWith_ReturnsFalse_WhenVesselsAreAdjacent()
     {
         // Arrange - Vessels touching at edges should not overlap
         var vessel1 = new PlacedVessel
@@ -187,11 +187,8 @@ public class PlacedVesselTests
             IsRotated = false
         };
 
-        // Act
-        var result = vessel1.OverlapsWith(vessel2);
-
-        // Assert - Adjacent vessels should not overlap
-        Assert.False(result);
+        // Act & Assert - Adjacent vessels should not overlap
+        Assert.False(vessel1.OverlapsWith(vessel2));
     }
 
     [Fact]
@@ -363,35 +360,22 @@ public class PlacedVesselTests
     }
 
     [Fact]
-    public void IsWithinBounds_ReturnsFalse_WhenRotatedVesselExceedsBounds()
+    public void IsWithinBounds_ReturnsFalse_WhenRotatedVesselExceedsHeight()
     {
-        // Arrange
+        // Arrange - Rotate a tall vessel so the height spills out of bounds
         var vessel = new PlacedVessel
-        {
-            X = 8,
-            Y = 0,
-            Dimensions = new ShipDimensions { Width = 4, Height = 2 }, // 4x2 normally
-            IsRotated = true // Becomes 2x4 when rotated
-        };
-
-        // Act - When rotated, effective width is 2, but effective height is 4
-        // At Y=0, height=4 extends to Y=4, which is within bounds
-        // But let's test a case where rotated vessel exceeds width
-        var vessel2 = new PlacedVessel
         {
             X = 0,
             Y = 8,
-            Dimensions = new ShipDimensions { Width = 2, Height = 4 }, // 2x4 normally
-            IsRotated = true // Becomes 4x2 when rotated
+            Dimensions = new ShipDimensions { Width = 2, Height = 5 },
+            IsRotated = true // Effective height becomes 2, width becomes 5
         };
 
-        // Act - When rotated, effective width is 4, effective height is 2
-        // At X=0, width=4 extends to X=4, which is within bounds
-        // But if placed at Y=8, height=2 extends to Y=10, which is at boundary (should be OK)
-        var result = vessel2.IsWithinBounds(10, 10);
+        // Act - Move down so Y + effective height > anchorage height
+        vessel.Y = 9; // 9 + 2 = 11 (> 10)
 
-        // Assert - Should be true since Y=8 + height=2 = Y=10, which is exactly at boundary
-        Assert.True(result);
+        // Assert
+        Assert.False(vessel.IsWithinBounds(10, 10));
     }
 
     [Fact]

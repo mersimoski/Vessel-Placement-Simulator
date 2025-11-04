@@ -23,6 +23,8 @@ The application will be available at:
 - HTTP: `http://localhost:5139`
 - HTTPS: `https://localhost:7106`
 
+> **CORS note:** When running in the default `Development` environment the app automatically tunnels API calls through the public AllOrigins proxy to bypass the ESA API's missing CORS headers. Publishing with `ASPNETCORE_ENVIRONMENT=Production` disables the proxy so you can point the UI at an internal backend proxy of your own.
+
 ### Project Structure
 
 ```

@@ -20,19 +20,5 @@
         /// </summary>
         public int EffectiveHeight => IsRotated ? Dimensions.Width : Dimensions.Height;
         
-        /// <summary>
-        /// Creates a PlacedVessel from this AvailableVessel at the specified position.
-        /// </summary>
-        public PlacedVessel ToPlacedVessel(int x, int y)
-        {
-            return new PlacedVessel
-            {
-                Dimensions = Dimensions,
-                Designation = Designation,
-                X = x,
-                Y = y,
-                IsRotated = IsRotated
-            };
-        }
     }
 
