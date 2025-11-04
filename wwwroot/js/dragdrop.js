@@ -47,7 +47,6 @@ window.setupDragAndDrop = function(element, vesselData) {
         
         // Create new handler
         const handler = function(e) {
-            console.log('Drag started with data:', vesselData);
             window.dragDropHelper.setDragData(e, vesselData);
             if (e.dataTransfer) {
                 e.dataTransfer.effectAllowed = "move";
@@ -63,7 +62,7 @@ window.setupDragAndDrop = function(element, vesselData) {
         // Add new listener
         element.addEventListener('dragstart', handler, false);
     } catch (err) {
-        console.error('Error setting up drag and drop:', err);
+        // Silently handle setup errors
     }
 };
 
@@ -73,6 +72,10 @@ window.setupGridDropHandlers = function(gridElement, width, height, dotNetHelper
     
     try {
         const cells = gridElement.querySelectorAll('.grid-cell.drop-zone');
+        
+        // Track current preview request to cancel stale ones
+        let currentPreviewRequest = null;
+        
         cells.forEach(function(cell) {
             const gridX = parseInt(cell.getAttribute('data-grid-x'));
             const gridY = parseInt(cell.getAttribute('data-grid-y'));
@@ -126,52 +129,79 @@ window.setupGridDropHandlers = function(gridElement, width, height, dotNetHelper
                                 adjustedY = 0;
                             }
                             
-                            // Only show preview if vessel can fit within bounds
+                            // Only proceed if vessel can fit within bounds
                             if (adjustedX + effectiveWidth <= width && adjustedY + effectiveHeight <= height &&
                                 adjustedX >= 0 && adjustedY >= 0) {
                                 
                                 // Get vessel ID to exclude it from collision check (if moving an existing vessel)
                                 const vesselId = parts.length >= 5 ? parts[0] : null;
                                 
+                                // Cancel any previous preview request
+                                if (currentPreviewRequest) {
+                                    // Clear previous preview immediately
+                                    gridElement.querySelectorAll('.grid-cell.drop-preview, .grid-cell.drop-preview-invalid').forEach(c => {
+                                        c.classList.remove('drop-preview', 'drop-preview-invalid');
+                                    });
+                                }
+                                
+                                // Create a unique request ID for this preview
+                                const requestId = adjustedX + '_' + adjustedY + '_' + effectiveWidth + '_' + effectiveHeight;
+                                currentPreviewRequest = requestId;
+                                
                                 // Check for collisions with placed vessels by calling C#
                                 dotNetHelper.invokeMethodAsync('CheckPlacementCollision', adjustedX, adjustedY, effectiveWidth, effectiveHeight, vesselId)
                                     .then(function(hasCollision) {
-                                        // Only show preview if placement is valid (no collision)
+                                        // Only process if this is still the current request (prevents stale highlights)
+                                        if (currentPreviewRequest !== requestId) {
+                                            return;
+                                        }
+                                        
+                                        // Always clear previous highlights first
+                                        gridElement.querySelectorAll('.grid-cell.drop-preview, .grid-cell.drop-preview-invalid').forEach(c => {
+                                            c.classList.remove('drop-preview', 'drop-preview-invalid');
+                                        });
+                                        
+                                        // Only show preview if placement is valid (no collision and within bounds)
                                         if (!hasCollision) {
-                                            // Calculate which cells would be occupied
+                                            // Calculate which cells would be occupied - only valid cells
                                             const occupiedCells = [];
                                             for (let dx = 0; dx < effectiveWidth; dx++) {
                                                 for (let dy = 0; dy < effectiveHeight; dy++) {
                                                     const cellX = adjustedX + dx;
                                                     const cellY = adjustedY + dy;
+                                                    // Double-check bounds before adding
                                                     if (cellX >= 0 && cellX < width && cellY >= 0 && cellY < height) {
                                                         occupiedCells.push({ x: cellX, y: cellY });
                                                     }
                                                 }
                                             }
                                             
-                                            // Highlight occupied cells with green preview
-                                            occupiedCells.forEach(pos => {
-                                                const targetCell = gridElement.querySelector(`[data-grid-x="${pos.x}"][data-grid-y="${pos.y}"]`);
-                                                if (targetCell) {
-                                                    targetCell.classList.remove('drop-preview', 'drop-preview-invalid');
-                                                    targetCell.classList.add('drop-preview');
-                                                }
-                                            });
-                                        } else {
-                                            // Clear any existing preview if invalid
+                                            // Only highlight if all cells are valid and we have the exact count
+                                            // The C# collision check already ensures no overlap with placed vessels
+                                            if (occupiedCells.length === effectiveWidth * effectiveHeight) {
+                                                occupiedCells.forEach(pos => {
+                                                    const targetCell = gridElement.querySelector(`[data-grid-x="${pos.x}"][data-grid-y="${pos.y}"]`);
+                                                    if (targetCell) {
+                                                        targetCell.classList.add('drop-preview');
+                                                    }
+                                                });
+                                            }
+                                        }
+                                    })
+                                    .catch(function(err) {
+                                        // Only clear if this is still the current request
+                                        if (currentPreviewRequest === requestId) {
                                             gridElement.querySelectorAll('.grid-cell.drop-preview, .grid-cell.drop-preview-invalid').forEach(c => {
                                                 c.classList.remove('drop-preview', 'drop-preview-invalid');
                                             });
                                         }
-                                    })
-                                    .catch(function(err) {
-                                        console.error('Error checking collision:', err);
-                                        // On error, don't show preview
-                                        gridElement.querySelectorAll('.grid-cell.drop-preview, .grid-cell.drop-preview-invalid').forEach(c => {
-                                            c.classList.remove('drop-preview', 'drop-preview-invalid');
-                                        });
                                     });
+                            } else {
+                                // Clear preview if out of bounds
+                                currentPreviewRequest = null;
+                                gridElement.querySelectorAll('.grid-cell.drop-preview, .grid-cell.drop-preview-invalid').forEach(c => {
+                                    c.classList.remove('drop-preview', 'drop-preview-invalid');
+                                });
                             }
                         }
                     }
@@ -189,7 +219,8 @@ window.setupGridDropHandlers = function(gridElement, width, height, dotNetHelper
                 const y = e.clientY;
                 
                 if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
-                    // Clear all previews when leaving the grid
+                    // Cancel current preview request and clear all previews when leaving the grid
+                    currentPreviewRequest = null;
                     gridElement.querySelectorAll('.grid-cell.drop-preview, .grid-cell.drop-preview-invalid').forEach(c => {
                         c.classList.remove('drop-preview', 'drop-preview-invalid');
                     });
@@ -200,9 +231,10 @@ window.setupGridDropHandlers = function(gridElement, width, height, dotNetHelper
                 e.preventDefault();
                 e.stopPropagation();
                 
-                // Reset preview tracking
+                // Reset preview tracking and cancel any pending preview requests
                 lastPreviewX = -1;
                 lastPreviewY = -1;
+                currentPreviewRequest = null;
                 
                 // Clear all preview highlights
                 gridElement.querySelectorAll('.grid-cell.drop-preview, .grid-cell.drop-preview-invalid').forEach(c => {
@@ -211,36 +243,18 @@ window.setupGridDropHandlers = function(gridElement, width, height, dotNetHelper
                 
                 const vesselData = window.dragDropHelper.getDragData();
                 
-                // Calculate precise position within the grid
-                const gridRect = gridElement.getBoundingClientRect();
-                const dropX = e.clientX - gridRect.left;
-                const dropY = e.clientY - gridRect.top;
-                
-                // Calculate which grid cell based on actual mouse position
-                const gridColumns = width;
-                const gridRows = height;
-                
-                const cellWidth = gridRect.width / gridColumns;
-                const cellHeight = gridRect.height / gridRows;
-                
-                const preciseGridX = Math.floor(dropX / cellWidth);
-                const preciseGridY = Math.floor(dropY / cellHeight);
-                
-                // Use the cell's data attributes as fallback
-                const finalX = Math.max(0, Math.min(preciseGridX, gridColumns - 1));
-                const finalY = Math.max(0, Math.min(preciseGridY, gridRows - 1));
-                
-                console.log('Drop on cell (' + finalX + ', ' + finalY + ') at pixel (' + dropX + ', ' + dropY + ') with data: ' + vesselData);
+                // Use the cell's data attributes directly - this is the cell where drop event fired
+                // This is more accurate than calculating from mouse coordinates
+                const finalX = gridX;
+                const finalY = gridY;
                 
                 if (vesselData) {
                     dotNetHelper.invokeMethodAsync('HandleDropFromJS', finalX, finalY, vesselData);
                 }
             }, false);
         });
-        
-        console.log('Setup drop handlers for ' + cells.length + ' cells');
     } catch (err) {
-        console.error('Error setting up grid drop handlers:', err);
+        // Silently handle setup errors
     }
 };
 

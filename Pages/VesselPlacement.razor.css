@@ -39,3 +39,24 @@
     background: #555;
 }
 
+.grid-cell.drop-preview {
+    outline: 2px solid #22c55e;
+}
+
+.grid-cell.drop-preview-invalid {
+    outline: 2px solid #ef4444;
+}
+
+/* grid container must be positioning context */
+.anchorage-grid { position: relative; }
+
+.preview-box {
+  position: absolute;
+  pointer-events: none;
+  box-sizing: border-box;
+  border: 2px solid;
+  background: rgba(0,0,0,0.04); /* subtle fill so users see size */
+  z-index: 2; /* above cells, below placed vessels if you want */
+}
+.preview-valid  { border-color: #22c55e; }
+.preview-invalid{ border-color: #ef4444; }

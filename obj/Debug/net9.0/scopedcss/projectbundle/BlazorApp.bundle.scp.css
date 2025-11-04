@@ -274,3 +274,10 @@ main[b-kc989pta5g] {
     background: #555;
 }
 
+.grid-cell.drop-preview[b-evq03dzl3i] {
+    outline: 2px solid #22c55e;
+}
+
+.grid-cell.drop-preview-invalid[b-evq03dzl3i] {
+    outline: 2px solid #ef4444;
+}

@@ -2,11 +2,36 @@
 @inject IJSRuntime JSRuntime
 @implements IAsyncDisposable
 
+@{
+    // Calculate visual size based on vessel dimensions
+    // Use area to determine card scale, but keep proportions for icon
+    var vesselArea = Vessel.EffectiveWidth * Vessel.EffectiveHeight;
+    var baseArea = 9.0; // 3x3 as reference
+    var areaRatio = vesselArea / baseArea;
+    
+    // Scale factor for card size (0.75 to 1.25 range)
+    var cardScale = Math.Max(0.75, Math.Min(1.25, Math.Sqrt(areaRatio)));
+    
+    // Calculate preview icon size based on vessel proportions
+    // Keep aspect ratio but scale based on larger dimension
+    var maxDim = Math.Max(Vessel.EffectiveWidth, Vessel.EffectiveHeight);
+    var iconBaseSize = 60.0;
+    var iconScale = Math.Max(0.6, Math.Min(1.2, maxDim / 6.0)); // Scale based on max dimension
+    
+    var previewWidth = (int)(iconBaseSize * iconScale * (Vessel.EffectiveWidth / (double)maxDim));
+    var previewHeight = (int)(iconBaseSize * iconScale * (Vessel.EffectiveHeight / (double)maxDim));
+    
+    // Ensure minimum sizes
+    previewWidth = Math.Max(40, previewWidth);
+    previewHeight = Math.Max(40, previewHeight);
+}
+
 <div class="draggable-vessel card mb-2" 
      draggable="true"
      @ondblclick="HandleDoubleClick"
      @ref="vesselElement"
-     data-vessel-id="@Vessel.Id">
+     data-vessel-id="@Vessel.Id"
+     style="min-height: @(60 * cardScale)px;">
     <div class="card-body p-2">
         <div class="d-flex justify-content-between align-items-center">
             <div class="flex-grow-1">
@@ -19,8 +44,8 @@
                     }
                 </small>
             </div>
-            <div class="vessel-preview">
-                <svg viewBox="0 0 100 100" class="vessel-preview-icon">
+            <div class="vessel-preview" style="width: @(previewWidth)px; height: @(previewHeight)px; min-width: @(previewWidth)px; min-height: @(previewHeight)px;">
+                <svg viewBox="0 0 100 100" class="vessel-preview-icon" style="width: 100%; height: 100%;">
                     <!-- Hull -->
                     <rect x="20" y="40" width="60" height="30" fill="#dc3545" rx="5"/>
                     <!-- Superstructure -->
@@ -60,7 +85,6 @@
             {
                 await JSRuntime.InvokeVoidAsync("setupDragAndDrop", vesselElement, vesselData);
                 lastVesselData = vesselData;
-                Console.WriteLine($"Setup drag for vessel {Vessel.Id}, rotated={Vessel.IsRotated}, effective={Vessel.EffectiveWidth}x{Vessel.EffectiveHeight}");
             }
         }
     }

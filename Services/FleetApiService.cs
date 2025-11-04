@@ -7,7 +7,8 @@ namespace BlazorApp.Services;
 
 /// <summary>
 /// Service implementation for fetching fleet data from the ESA API.
-/// Uses a CORS proxy in development to work around CORS restrictions.
+/// Note: The API does not have CORS headers enabled, so we use a CORS proxy in development.
+/// In production, you would use a backend API that proxies the requests.
 /// </summary>
 public class FleetApiService : IFleetApiService, IDisposable
 {
@@ -16,21 +17,20 @@ public class FleetApiService : IFleetApiService, IDisposable
     private const string ApiBaseUrl = "https://esa.instech.no";
     private const string ApiPath = "/api/fleets/random";
     
-    // Public CORS proxy service for development
-    // Note: In production, you would want to use your own backend API to proxy requests
+    // CORS proxy is necessary because the API doesn't send CORS headers
+    // This allows browser-based requests to work in development
     private const string CorsProxyUrl = "https://api.allorigins.win/raw?url=";
 
     public FleetApiService(IWebAssemblyHostEnvironment? hostEnvironment = null)
     {
         _httpClient = new HttpClient();
         
-        // Use CORS proxy in development when running in browser (to work around CORS restrictions)
-        // In production, you should use a backend API that proxies the requests
+        // Use CORS proxy in development - the API doesn't have CORS headers enabled
+        // Without this, browsers block the request due to CORS policy
         _useProxy = hostEnvironment?.IsDevelopment() == true;
         
         if (_useProxy)
         {
-            // For proxy, we'll construct the full URL in the request
             _httpClient.BaseAddress = new Uri(CorsProxyUrl);
         }
         else
@@ -51,7 +51,7 @@ public class FleetApiService : IFleetApiService, IDisposable
             string requestUrl;
             if (_useProxy)
             {
-                // Use CORS proxy to bypass CORS restrictions in development
+                // Use CORS proxy - encode the full API URL and pass it to the proxy
                 var fullUrl = $"{ApiBaseUrl}{ApiPath}{cacheBuster}";
                 var encodedUrl = Uri.EscapeDataString(fullUrl);
                 requestUrl = $"{CorsProxyUrl}{encodedUrl}";
@@ -60,7 +60,7 @@ public class FleetApiService : IFleetApiService, IDisposable
             {
                 requestUrl = $"{ApiPath}{cacheBuster}";
             }
-
+            
             var response = await _httpClient.GetAsync(requestUrl, cancellationToken);
             response.EnsureSuccessStatusCode();
             
@@ -79,22 +79,19 @@ public class FleetApiService : IFleetApiService, IDisposable
             
             return fleetData;
         }
-        catch (HttpRequestException ex)
+        catch (HttpRequestException)
         {
             // Handle network/CORS errors
-            Console.WriteLine($"HTTP Error: {ex.Message}");
             return null;
         }
-        catch (JsonException ex)
+        catch (JsonException)
         {
             // Handle deserialization errors
-            Console.WriteLine($"JSON Error: {ex.Message}");
             return null;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             // Handle other errors
-            Console.WriteLine($"Error: {ex.Message}");
             return null;
         }
     }

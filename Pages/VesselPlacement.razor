@@ -185,7 +185,6 @@
             // Skip vessels that cannot fit in either orientation
             if (!fitsNormal && !fitsRotated)
             {
-                Console.WriteLine($"Skipping fleet {designation} with dimensions {dimensions.Width}x{dimensions.Height} - too large for anchorage {canvasWidth}x{canvasHeight}");
                 continue;
             }
             
@@ -218,8 +217,6 @@
                 allVessels.Add(vessel);
             }
         }
-        
-        Console.WriteLine($"Loaded {allVessels.Count} vessels from {fleetData.Fleets.Count} fleet(s)");
         
         // Shuffle all vessels to randomize their order
         availableVessels = allVessels.OrderBy(_ => random.Next()).ToList();
