@@ -19,6 +19,26 @@ window.dragDropHelper = {
     clearDragData: function() {
         this.dragData = null;
         this.currentPreview = null;
+    },
+
+    getGridCellSize: function(gridElementId) {
+        const gridElement = document.getElementById(gridElementId);
+        if (!gridElement) {
+            return { width: 0, height: 0 };
+        }
+
+        const rect = gridElement.getBoundingClientRect();
+        const firstCell = gridElement.querySelector('.grid-cell[data-grid-x="0"][data-grid-y="0"]');
+        
+        if (!firstCell) {
+            return { width: 0, height: 0 };
+        }
+
+        const cellRect = firstCell.getBoundingClientRect();
+        return {
+            width: cellRect.width,
+            height: cellRect.height
+        };
     }
 };
 

@@ -1,7 +1,7 @@
 /* Additional styling for vessel placement page */
 
 .container-fluid[b-evq03dzl3i] {
-    max-width: 1400px;
+    padding: 20px;
 }
 
 .card[b-evq03dzl3i] {
@@ -15,7 +15,7 @@
 }
 
 .vessel-list-container[b-evq03dzl3i] {
-    max-height: 500px;
+    max-height: 600px;
     overflow-y: auto;
     overflow-x: hidden;
     padding-right: 8px;

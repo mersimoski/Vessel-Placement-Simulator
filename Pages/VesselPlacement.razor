@@ -24,9 +24,10 @@
     {
         <div class="row">
             <!-- Anchorage Area -->
-            <div class="col-lg-8 mb-4">
+            <div class="col-lg-6 mb-4">
                 <h3 class="mb-3">Anchorage</h3>
                 <AnchorageGrid 
+                    @ref="anchorageGridRef"
                     AnchorageWidth="@fleetData.AnchorageSize.Width"
                     AnchorageHeight="@fleetData.AnchorageSize.Height"
                     PlacedVessels="@placedVessels"
@@ -35,7 +36,7 @@
             </div>
 
         <!-- Vessel Staging Area -->
-        <div class="col-lg-4">
+        <div class="col-lg-6">
             @if (isComplete)
             {
                 <!-- Completion Message -->
@@ -53,7 +54,10 @@
             else
             {
                 <div class="mb-4">
-                    <h3 class="mb-3">Available Vessels</h3>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h3 class="mb-0">Available Vessels</h3>
+                        <small class="text-muted">Drag to place • Double-click to rotate</small>
+                    </div>
                     <div class="vessel-list-container">
                         <div class="d-flex flex-column gap-3">
                             @if (availableVessels.Any())
@@ -63,7 +67,10 @@
                                     <DraggableVessel 
                                         @key="@vessel.Id"
                                         Vessel="@vessel"
-                                        OnRotate="HandleVesselRotate" />
+                                        OnRotate="HandleVesselRotate"
+                                        AnchorageWidth="@fleetData.AnchorageSize.Width"
+                                        AnchorageHeight="@fleetData.AnchorageSize.Height"
+                                        GridElementId="@gridElementId" />
                                 }
                             }
                             else
@@ -121,10 +128,27 @@
     private List<AvailableVessel> availableVessels = new();
     private bool isLoading = true;
     private bool isComplete = false;
+    private AnchorageGrid? anchorageGridRef;
+    private string gridElementId = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
         await LoadFleetData();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (anchorageGridRef != null)
+        {
+            // Wait for grid to render, then get the ID
+            await Task.Delay(300);
+            var newGridId = $"anchorage-grid-{anchorageGridRef.GetHashCode()}";
+            if (newGridId != gridElementId)
+            {
+                gridElementId = newGridId;
+                StateHasChanged(); // Trigger vessels to remeasure with new grid ID
+            }
+        }
     }
 
     private async Task LoadFleetData()

@@ -103,6 +103,8 @@
     [Parameter] public EventCallback<PlacedVessel> OnVesselPlaced { get; set; }
     [Parameter] public EventCallback<string> OnVesselRemoved { get; set; }
 
+    private string GridElementId => $"anchorage-grid-{GetHashCode()}";
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         // Setup drop handlers on first render or when dimensions change

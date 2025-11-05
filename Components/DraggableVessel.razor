@@ -2,52 +2,37 @@
 @inject IJSRuntime JSRuntime
 @implements IAsyncDisposable
 
-@{
-    const double cellPixelSize = 16.0;
-    var previewWidth = Math.Clamp(Vessel.EffectiveWidth * cellPixelSize, 48, 220);
-    var previewHeight = Math.Clamp(Vessel.EffectiveHeight * cellPixelSize, 48, 220);
-    var cardMinHeight = previewHeight + 36;
-    var cardMinWidth = Math.Max(180, previewWidth + 72);
-}
-
-<div class="draggable-vessel card mb-2" 
-     draggable="true"
-     @ondblclick="HandleDoubleClick"
-     @ref="vesselElement"
-     data-vessel-id="@Vessel.Id"
-     style="min-height: @(cardMinHeight)px; min-width: @(cardMinWidth)px;">
-    <div class="card-body p-2">
-        <div class="d-flex justify-content-between align-items-center">
-            <div class="flex-grow-1">
-                <div class="fw-bold">@Vessel.Designation</div>
-                <small class="text-muted">
-                    @Vessel.EffectiveWidth × @Vessel.EffectiveHeight
-                    @if (Vessel.IsRotated)
-                    {
-                        <span class="badge bg-info ms-1">Rotated</span>
-                    }
-                </small>
-            </div>
-            <div class="vessel-preview" style="width: @(previewWidth)px; height: @(previewHeight)px;">
-                <svg viewBox="0 0 100 100" class="vessel-preview-icon" style="width: 100%; height: 100%;">
-                    <!-- Hull -->
-                    <rect x="20" y="40" width="60" height="30" fill="#dc3545" rx="5"/>
-                    <!-- Superstructure -->
-                    <rect x="30" y="20" width="40" height="25" fill="#ffffff" rx="3"/>
-                    <!-- Windows -->
-                    <circle cx="40" cy="32" r="3" fill="#6c757d"/>
-                    <circle cx="50" cy="32" r="3" fill="#6c757d"/>
-                    <circle cx="60" cy="32" r="3" fill="#6c757d"/>
-                    <!-- Mast -->
-                    <line x1="50" y1="15" x2="50" y2="20" stroke="#6c757d" stroke-width="2"/>
-                    <!-- Water -->
-                    <ellipse cx="50" cy="85" rx="50" ry="10" fill="#0dcaf0" opacity="0.5"/>
-                </svg>
-            </div>
-        </div>
-        <div class="mt-1">
-            <small class="text-muted">Drag to place • Double-click to rotate</small>
-        </div>
+<div class="vessel-card-wrapper mb-3">
+    <div class="vessel-info mb-1">
+        <div class="fw-bold">@Vessel.Designation</div>
+        <small class="text-muted">
+            <strong>@Vessel.EffectiveWidth × @Vessel.EffectiveHeight</strong> grid cells
+            @if (Vessel.IsRotated)
+            {
+                <span class="badge bg-info ms-1">Rotated</span>
+            }
+        </small>
+    </div>
+    <div class="draggable-vessel vessel-card" 
+         draggable="true"
+         @ondblclick="HandleDoubleClick"
+         @ref="vesselElement"
+         data-vessel-id="@Vessel.Id"
+         style="width: @(cardWidth)px; height: @(cardHeight)px; min-width: @(cardWidth)px; min-height: @(cardHeight)px;">
+        <svg viewBox="0 0 100 100" class="vessel-icon" style="width: 100%; height: 100%;">
+            <!-- Hull -->
+            <rect x="20" y="40" width="60" height="30" fill="#dc3545" rx="5"/>
+            <!-- Superstructure -->
+            <rect x="30" y="20" width="40" height="25" fill="#ffffff" rx="3"/>
+            <!-- Windows -->
+            <circle cx="40" cy="32" r="3" fill="#6c757d"/>
+            <circle cx="50" cy="32" r="3" fill="#6c757d"/>
+            <circle cx="60" cy="32" r="3" fill="#6c757d"/>
+            <!-- Mast -->
+            <line x1="50" y1="15" x2="50" y2="20" stroke="#6c757d" stroke-width="2"/>
+            <!-- Water -->
+            <ellipse cx="50" cy="85" rx="50" ry="10" fill="#0dcaf0" opacity="0.5"/>
+        </svg>
     </div>
 </div>
 
@@ -55,12 +40,79 @@
     private ElementReference vesselElement;
     [Parameter] public AvailableVessel Vessel { get; set; } = null!;
     [Parameter] public EventCallback<string> OnRotate { get; set; }
+    [Parameter] public int AnchorageWidth { get; set; } = 12;
+    [Parameter] public int AnchorageHeight { get; set; } = 15;
+    [Parameter] public string GridElementId { get; set; } = string.Empty;
 
     private string? lastVesselData;
+    private double cardWidth = 100;
+    private double cardHeight = 100;
+
+    private string? lastGridElementId;
+
+    protected override void OnParametersSet()
+    {
+        // Recalculate if grid ID changed
+        if (GridElementId != lastGridElementId)
+        {
+            lastGridElementId = GridElementId;
+            CalculateFallbackSize();
+        }
+        else if (lastGridElementId == null)
+        {
+            CalculateFallbackSize();
+        }
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         var vesselData = $"{Vessel.Id}|{Vessel.EffectiveWidth}|{Vessel.EffectiveHeight}|{Vessel.IsRotated}|{Vessel.Designation}";
+        
+        // Always try to get actual cell size if grid ID is available
+        if (!string.IsNullOrEmpty(GridElementId))
+        {
+            var retries = 8;
+            for (int i = 0; i < retries; i++)
+            {
+                try
+                {
+                    await Task.Delay(100 + (i * 50)); // Progressive delay
+                    var cellSize = await JSRuntime.InvokeAsync<CellSize>("dragDropHelper.getGridCellSize", GridElementId);
+                    if (cellSize != null && cellSize.Width > 5 && cellSize.Height > 5) // Valid cell size
+                    {
+                        // Use the average of width and height to ensure square cells
+                        var cellSizeAvg = (cellSize.Width + cellSize.Height) / 2.0;
+                        // Scale up by 1.3x to make vessels more visible
+                        const double scaleFactor = 1.3;
+                        var newWidth = Vessel.EffectiveWidth * cellSizeAvg * scaleFactor;
+                        var newHeight = Vessel.EffectiveHeight * cellSizeAvg * scaleFactor;
+                        
+                        // Always update to ensure accurate size
+                        cardWidth = newWidth;
+                        cardHeight = newHeight;
+                        StateHasChanged();
+                        
+                        // Setup drag handler after size is set
+                        if (vesselElement.Id != null)
+                        {
+                            await JSRuntime.InvokeVoidAsync("setupDragAndDrop", vesselElement, vesselData);
+                            lastVesselData = vesselData;
+                        }
+                        return; // Successfully measured
+                    }
+                }
+                catch
+                {
+                    // Continue to next retry
+                }
+            }
+            // If all retries failed, use fallback with scale
+            CalculateFallbackSize();
+        }
+        else if (firstRender)
+        {
+            CalculateFallbackSize();
+        }
         
         // Setup or update drag handler if data changed or first render
         if (firstRender || vesselData != lastVesselData)
@@ -71,6 +123,33 @@
                 lastVesselData = vesselData;
             }
         }
+    }
+
+    private void CalculateFallbackSize()
+    {
+        const double gridHeightPx = 500.0;
+        var cellSize = gridHeightPx / Math.Max(1, AnchorageHeight);
+        // Scale up by 1.3x to make vessels more visible
+        const double scaleFactor = 1.3;
+        cardWidth = Vessel.EffectiveWidth * cellSize * scaleFactor;
+        cardHeight = Vessel.EffectiveHeight * cellSize * scaleFactor;
+    }
+    
+    // Calculate grid cell dimensions for display
+    private string GetGridCellInfo()
+    {
+        const double gridHeightPx = 500.0;
+        var cellHeight = gridHeightPx / Math.Max(1, AnchorageHeight);
+        var gridWidthPx = 800.0; // Estimated grid width
+        var cellWidth = gridWidthPx / Math.Max(1, AnchorageWidth);
+        var cellSize = Math.Min(cellHeight, cellWidth);
+        return $"Cell: {cellSize:F1}px × {cellSize:F1}px";
+    }
+
+    private class CellSize
+    {
+        public double Width { get; set; }
+        public double Height { get; set; }
     }
 
     private async Task HandleDoubleClick()

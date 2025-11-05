@@ -110,39 +110,47 @@
 }
 
 /* /Components/DraggableVessel.razor.rz.scp.css */
-.draggable-vessel[b-l3oekod959] {
+.vessel-card-wrapper[b-l3oekod959] {
+    display: flex;
+    flex-direction: column;
+}
+
+.vessel-info[b-l3oekod959] {
+    font-size: 0.9rem;
+}
+
+.vessel-card[b-l3oekod959] {
     cursor: grab;
     transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
     user-select: none;
     border: 2px solid #dee2e6;
+    border-radius: 4px;
+    background-color: #f8f9fa;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
-.draggable-vessel:hover[b-l3oekod959] {
+.vessel-card:hover[b-l3oekod959] {
     transform: translateY(-3px);
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
     border-color: #0d6efd;
 }
 
-.draggable-vessel:active[b-l3oekod959] {
+.vessel-card:active[b-l3oekod959] {
     cursor: grabbing;
     transform: translateY(-1px);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.vessel-preview[b-l3oekod959] {
-    flex-shrink: 0;
-    background-color: #f8f9fa;
-    border-radius: 4px;
-    padding: 5px;
-    border: 1px solid #dee2e6;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.vessel-preview-icon[b-l3oekod959] {
+.vessel-icon[b-l3oekod959] {
     width: 100%;
     height: 100%;
+    display: block;
 }
 
 /* /Layout/MainLayout.razor.rz.scp.css */
@@ -263,7 +271,7 @@ main[b-kc989pta5g] {
 /* Additional styling for vessel placement page */
 
 .container-fluid[b-evq03dzl3i] {
-    max-width: 1400px;
+    padding: 20px;
 }
 
 .card[b-evq03dzl3i] {
@@ -277,7 +285,7 @@ main[b-kc989pta5g] {
 }
 
 .vessel-list-container[b-evq03dzl3i] {
-    max-height: 500px;
+    max-height: 600px;
     overflow-y: auto;
     overflow-x: hidden;
     padding-right: 8px;
