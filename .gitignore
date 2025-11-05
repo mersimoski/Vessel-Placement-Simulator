@@ -3,6 +3,7 @@ bin/
 obj/
 [Bb]in/
 [Oo]bj/
+bin
 
 ## Visual Studio / Rider
 .vs/
