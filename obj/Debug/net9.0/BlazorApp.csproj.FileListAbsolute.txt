@@ -1081,10 +1081,6 @@ C:\Projects\blazor-app\BlazorApp\obj\Debug\net9.0\ref\BlazorApp.dll
 C:\Projects\blazor-app\BlazorApp\obj\Debug\net9.0\BlazorApp.sourcelink.json
 C:\Projects\blazor-app\BlazorApp\obj\Debug\net9.0\compressed\ukbyxv6qc4-s47nt2dnau.gz
 C:\Projects\blazor-app\BlazorApp\obj\Debug\net9.0\compressed\hcgmxbnh7f-s47nt2dnau.gz
-C:\Projects\blazor-app\BlazorApp\bin\Debug\net9.0\wwwroot\_framework\BlazorApp.78nxoabcgq.wasm
-C:\Projects\blazor-app\BlazorApp\bin\Debug\net9.0\wwwroot\_framework\BlazorApp.qp5j03vnp0.pdb
-C:\Projects\blazor-app\BlazorApp\bin\Debug\net9.0\wwwroot\_framework\BlazorApp.78nxoabcgq.wasm.gz
-C:\Projects\blazor-app\BlazorApp\bin\Debug\net9.0\wwwroot\_framework\BlazorApp.qp5j03vnp0.pdb.gz
 C:\Projects\blazor-app\BlazorApp\obj\Debug\net9.0\compressed\bqspxo5d1w-vuyx575uij.gz
 C:\Projects\blazor-app\BlazorApp\obj\Debug\net9.0\compressed\rt3fof728n-t1cqhe9u97.gz
 C:\Projects\blazor-app\BlazorApp\obj\Debug\net9.0\compressed\4ip4gmuadh-xvp3kq03qx.gz
@@ -1097,6 +1093,10 @@ C:\Projects\blazor-app\BlazorApp\obj\Debug\net9.0\compressed\0vmfgz1tfd-ynyaa8k9
 C:\Projects\blazor-app\BlazorApp\obj\Debug\net9.0\compressed\xrc3hqx00z-3xx6h9wdqb.gz
 C:\Projects\blazor-app\BlazorApp\obj\Debug\net9.0\compressed\b4e6d7jy4h-3j9qou4v0c.gz
 C:\Projects\blazor-app\BlazorApp\obj\Debug\net9.0\compressed\p0c1klfuph-33wdq8g5n4.gz
-C:\Projects\blazor-app\BlazorApp\obj\Debug\net9.0\compressed\6ylt5hya6o-78nxoabcgq.gz
-C:\Projects\blazor-app\BlazorApp\obj\Debug\net9.0\compressed\ui6ug4ok6m-qp5j03vnp0.gz
-C:\Projects\blazor-app\BlazorApp\obj\Debug\net9.0\compressed\k4a7psrd0j-9v64bb7n8b.gz
+C:\Projects\blazor-app\BlazorApp\bin\Debug\net9.0\wwwroot\_framework\BlazorApp.lrtnoj7x7z.wasm
+C:\Projects\blazor-app\BlazorApp\bin\Debug\net9.0\wwwroot\_framework\BlazorApp.a5t6o51x49.pdb
+C:\Projects\blazor-app\BlazorApp\bin\Debug\net9.0\wwwroot\_framework\BlazorApp.lrtnoj7x7z.wasm.gz
+C:\Projects\blazor-app\BlazorApp\bin\Debug\net9.0\wwwroot\_framework\BlazorApp.a5t6o51x49.pdb.gz
+C:\Projects\blazor-app\BlazorApp\obj\Debug\net9.0\compressed\6ylt5hya6o-lrtnoj7x7z.gz
+C:\Projects\blazor-app\BlazorApp\obj\Debug\net9.0\compressed\ui6ug4ok6m-a5t6o51x49.gz
+C:\Projects\blazor-app\BlazorApp\obj\Debug\net9.0\compressed\k4a7psrd0j-lilre5lqiy.gz

@@ -13,7 +13,7 @@ public partial class VesselPlacement
     private List<PlacedVessel> placedVessels = new();
     private List<AvailableVessel> availableVessels = new();
     private bool isLoading = true;
-    private bool isComplete = false;
+    private bool isComplete;
     private AnchorageGrid? anchorageGridRef;
     private string gridElementId = string.Empty;
 
@@ -43,7 +43,7 @@ public partial class VesselPlacement
         isComplete = false;
         placedVessels.Clear();
         availableVessels.Clear();
-        
+
         try
         {
             fleetData = await FleetApiService.GetRandomFleetAsync();
@@ -69,43 +69,43 @@ public partial class VesselPlacement
 
         var random = new Random();
         availableVessels.Clear();
-        
+
         var canvasWidth = fleetData.AnchorageSize.Width;
         var canvasHeight = fleetData.AnchorageSize.Height;
-        
+
         // If no fleets from API, return empty list
         if (!fleetData.Fleets.Any())
         {
             return;
         }
-        
+
         // Create vessels based on the API response - use exact dimensions from API
         var allVessels = new List<AvailableVessel>();
-        
+
         foreach (var fleet in fleetData.Fleets)
         {
             var dimensions = fleet.SingleShipDimensions;
             var designation = fleet.ShipDesignation;
             var shipCount = fleet.ShipCount;
-            
+
             // Check if vessel can fit in either orientation
             var fitsNormal = dimensions.Width <= canvasWidth && dimensions.Height <= canvasHeight;
             var fitsRotated = dimensions.Height <= canvasWidth && dimensions.Width <= canvasHeight;
-            
+
             // Skip vessels that cannot fit in either orientation
             if (!fitsNormal && !fitsRotated)
             {
                 continue;
             }
-            
+
             // Create the specified number of vessels for this fleet with exact API dimensions
             for (int i = 0; i < shipCount; i++)
             {
                 var uniqueId = Guid.NewGuid().ToString();
-                
+
                 // Randomly determine initial rotation, but ensure it fits
                 var isRotated = random.Next(2) == 1;
-                
+
                 // If one orientation doesn't fit, force the other
                 if (isRotated && !fitsRotated && fitsNormal)
                 {
@@ -115,7 +115,7 @@ public partial class VesselPlacement
                 {
                     isRotated = true;
                 }
-                
+
                 var vessel = new AvailableVessel
                 {
                     Id = uniqueId,
@@ -123,11 +123,11 @@ public partial class VesselPlacement
                     Designation = designation,
                     IsRotated = isRotated
                 };
-                
+
                 allVessels.Add(vessel);
             }
         }
-        
+
         // Shuffle all vessels to randomize their order
         availableVessels = allVessels.OrderBy(_ => random.Next()).ToList();
     }
@@ -139,7 +139,7 @@ public partial class VesselPlacement
         {
             return;
         }
-        
+
         // Remove the vessel from available vessels by matching ID
         var availableVessel = availableVessels.FirstOrDefault(v => v.Id == vessel.Id);
         if (availableVessel != null)

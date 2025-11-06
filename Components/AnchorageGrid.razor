@@ -1,7 +1,5 @@
-@using BlazorApp.Models
-
 <div class="anchorage-container">
-    <div class="anchorage-grid" 
+    <div class="anchorage-grid"
          @ref="gridElement"
          style="grid-template-columns: repeat(@AnchorageWidth, 1fr); grid-template-rows: repeat(@AnchorageHeight, 1fr);"
          id="anchorage-grid-@(GetHashCode())">
@@ -11,8 +9,8 @@
             {
                 var cellX = x;
                 var cellY = y;
-                <div class="grid-cell drop-zone" 
-                     data-x="@cellX" 
+                <div class="grid-cell drop-zone"
+                     data-x="@cellX"
                      data-y="@cellY"
                      data-grid-x="@cellX"
                      data-grid-y="@cellY">
@@ -26,7 +24,7 @@
             var colEnd = vessel.X + vessel.EffectiveWidth + 1;
             var rowStart = vessel.Y + 1;
             var rowEnd = vessel.Y + vessel.EffectiveHeight + 1;
-            
+
             <div class="placed-vessel"
                  style="grid-column-start: @colStart; grid-column-end: @colEnd; grid-row-start: @rowStart; grid-row-end: @rowEnd;"
                  @onclick="@(() => HandleVesselClick(vessel.Id))">

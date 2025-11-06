@@ -14,6 +14,17 @@ public class FleetData
 /// </summary>
 public class AnchorageSize
 {
+    public AnchorageSize(int width, int height)
+    {
+        Width = width;
+        Height = height;
+    }
+
+    public AnchorageSize()
+    {
+        // Default constructor for JSON deserialization
+    }
+
     public int Width { get; set; }
     public int Height { get; set; }
 }
@@ -23,6 +34,16 @@ public class AnchorageSize
 /// </summary>
 public class Fleet
 {
+    public Fleet()
+    {
+        // Default constructor for JSON deserialization
+    }
+
+    public Fleet(int shipCount)
+    {
+        ShipCount = shipCount;
+    }
+
     public ShipDimensions SingleShipDimensions { get; set; } = new();
     public string ShipDesignation { get; set; } = string.Empty;
     public int ShipCount { get; set; }

@@ -6,7 +6,7 @@ namespace BlazorApp.Components;
 
 public partial class DraggableVessel : IAsyncDisposable
 {
-    [Inject] private IJSRuntime JSRuntime { get; set; } = null!;
+    [Inject] private IJSRuntime JsRuntime { get; set; } = null!;
 
     private ElementReference vesselElement;
     [Parameter] public AvailableVessel Vessel { get; set; } = null!;
@@ -37,7 +37,7 @@ public partial class DraggableVessel : IAsyncDisposable
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         var vesselData = $"{Vessel.Id}|{Vessel.EffectiveWidth}|{Vessel.EffectiveHeight}|{Vessel.IsRotated}|{Vessel.Designation}";
-        
+
         // Always try to get actual cell size if grid ID is available
         if (!string.IsNullOrEmpty(GridElementId))
         {
@@ -47,8 +47,8 @@ public partial class DraggableVessel : IAsyncDisposable
                 try
                 {
                     await Task.Delay(100 + (i * 50)); // Progressive delay
-                    var cellSize = await JSRuntime.InvokeAsync<CellSize>("dragDropHelper.getGridCellSize", GridElementId);
-                    if (cellSize != null && cellSize.Width > 5 && cellSize.Height > 5) // Valid cell size
+                    var cellSize = await JsRuntime.InvokeAsync<CellSize>("dragDropHelper.getGridCellSize", GridElementId);
+                    if (cellSize.Width > 5 && cellSize.Height > 5) // Valid cell size
                     {
                         // Use the average of width and height to ensure square cells
                         var cellSizeAvg = (cellSize.Width + cellSize.Height) / 2.0;
@@ -56,18 +56,15 @@ public partial class DraggableVessel : IAsyncDisposable
                         const double scaleFactor = 1.3;
                         var newWidth = Vessel.EffectiveWidth * cellSizeAvg * scaleFactor;
                         var newHeight = Vessel.EffectiveHeight * cellSizeAvg * scaleFactor;
-                        
+
                         // Always update to ensure accurate size
                         cardWidth = newWidth;
                         cardHeight = newHeight;
                         StateHasChanged();
-                        
+
                         // Setup drag handler after size is set
-                        if (vesselElement.Id != null)
-                        {
-                            await JSRuntime.InvokeVoidAsync("setupDragAndDrop", vesselElement, vesselData);
-                            lastVesselData = vesselData;
-                        }
+                        await JsRuntime.InvokeVoidAsync("setupDragAndDrop", vesselElement, vesselData);
+                        lastVesselData = vesselData;
                         return; // Successfully measured
                     }
                 }
@@ -83,15 +80,12 @@ public partial class DraggableVessel : IAsyncDisposable
         {
             CalculateFallbackSize();
         }
-        
+
         // Setup or update drag handler if data changed or first render
         if (firstRender || vesselData != lastVesselData)
         {
-            if (vesselElement.Id != null)
-            {
-                await JSRuntime.InvokeVoidAsync("setupDragAndDrop", vesselElement, vesselData);
-                lastVesselData = vesselData;
-            }
+            await JsRuntime.InvokeVoidAsync("setupDragAndDrop", vesselElement, vesselData);
+            lastVesselData = vesselData;
         }
     }
 
@@ -104,17 +98,8 @@ public partial class DraggableVessel : IAsyncDisposable
         cardWidth = Vessel.EffectiveWidth * cellSize * scaleFactor;
         cardHeight = Vessel.EffectiveHeight * cellSize * scaleFactor;
     }
-    
+
     // Calculate grid cell dimensions for display
-    private string GetGridCellInfo()
-    {
-        const double gridHeightPx = 500.0;
-        var cellHeight = gridHeightPx / Math.Max(1, AnchorageHeight);
-        var gridWidthPx = 800.0; // Estimated grid width
-        var cellWidth = gridWidthPx / Math.Max(1, AnchorageWidth);
-        var cellSize = Math.Min(cellHeight, cellWidth);
-        return $"Cell: {cellSize:F1}px × {cellSize:F1}px";
-    }
 
     private async Task HandleDoubleClick()
     {

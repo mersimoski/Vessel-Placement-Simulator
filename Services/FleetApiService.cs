@@ -8,8 +8,8 @@ namespace BlazorApp.Services;
 /// </summary>
 public class FleetApiService : IFleetApiService
 {
-    private readonly HttpClient _httpClient;
-    private readonly bool _useProxy;
+    private readonly HttpClient httpClient;
+    private readonly bool useProxy;
     private static readonly JsonSerializerOptions SerializerOptions = new()
     {
         PropertyNameCaseInsensitive = true
@@ -20,8 +20,8 @@ public class FleetApiService : IFleetApiService
 
     public FleetApiService(HttpClient httpClient, bool useProxy = false)
     {
-        _httpClient = httpClient;
-        _useProxy = useProxy;
+        this.httpClient = httpClient;
+        this.useProxy = useProxy;
     }
 
     public async Task<FleetData?> GetRandomFleetAsync(CancellationToken cancellationToken = default)
@@ -33,11 +33,11 @@ public class FleetApiService : IFleetApiService
             var timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             var cacheBuster = $"?_t={timestamp}&_r={randomSeed}";
 
-            var requestUrl = _useProxy
+            var requestUrl = useProxy
                 ? $"{CorsProxyEndpoint}{Uri.EscapeDataString(ApiEndpoint + cacheBuster)}"
                 : $"{ApiEndpoint}{cacheBuster}";
 
-            var response = await _httpClient.GetAsync(requestUrl, cancellationToken);
+            var response = await httpClient.GetAsync(requestUrl, cancellationToken);
             response.EnsureSuccessStatusCode();
 
             await using var responseStream = await response.Content.ReadAsStreamAsync(cancellationToken);
