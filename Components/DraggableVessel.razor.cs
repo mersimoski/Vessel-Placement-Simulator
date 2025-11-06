@@ -41,32 +41,30 @@ public partial class DraggableVessel : IAsyncDisposable
         // Always try to get actual cell size if grid ID is available
         if (!string.IsNullOrEmpty(GridElementId))
         {
-            var retries = 8;
-            for (int i = 0; i < retries; i++)
+            const int retries = 8;
+            for (var i = 0; i < retries; i++)
             {
                 try
                 {
-                    await Task.Delay(100 + (i * 50)); // Progressive delay
+                    await Task.Delay(100 + i * 50); // Progressive delay
                     var cellSize = await JsRuntime.InvokeAsync<CellSize>("dragDropHelper.getGridCellSize", GridElementId);
-                    if (cellSize.Width > 5 && cellSize.Height > 5) // Valid cell size
-                    {
-                        // Use the average of width and height to ensure square cells
-                        var cellSizeAvg = (cellSize.Width + cellSize.Height) / 2.0;
-                        // Scale up by 1.3x to make vessels more visible
-                        const double scaleFactor = 1.3;
-                        var newWidth = Vessel.EffectiveWidth * cellSizeAvg * scaleFactor;
-                        var newHeight = Vessel.EffectiveHeight * cellSizeAvg * scaleFactor;
+                    if (!(cellSize.Width > 5) || !(cellSize.Height > 5)) continue; // Valid cell size
+                    // Use the average of width and height to ensure square cells
+                    var cellSizeAvg = (cellSize.Width + cellSize.Height) / 2.0;
+                    // Scale up by 1.3x to make vessels more visible
+                    const double scaleFactor = 1.3;
+                    var newWidth = Vessel.EffectiveWidth * cellSizeAvg * scaleFactor;
+                    var newHeight = Vessel.EffectiveHeight * cellSizeAvg * scaleFactor;
 
-                        // Always update to ensure accurate size
-                        cardWidth = newWidth;
-                        cardHeight = newHeight;
-                        StateHasChanged();
+                    // Always update to ensure accurate size
+                    cardWidth = newWidth;
+                    cardHeight = newHeight;
+                    StateHasChanged();
 
-                        // Setup drag handler after size is set
-                        await JsRuntime.InvokeVoidAsync("setupDragAndDrop", vesselElement, vesselData);
-                        lastVesselData = vesselData;
-                        return; // Successfully measured
-                    }
+                    // Setup drag handler after size is set
+                    await JsRuntime.InvokeVoidAsync("setupDragAndDrop", vesselElement, vesselData);
+                    lastVesselData = vesselData;
+                    return; // Successfully measured
                 }
                 catch
                 {
@@ -110,12 +108,14 @@ public partial class DraggableVessel : IAsyncDisposable
     {
         // Cleanup if needed
         await Task.CompletedTask;
-    }
 
+        // Prevent finalizer from running since cleanup is already done
+        GC.SuppressFinalize(this);
+    }
     private class CellSize
     {
-        public double Width { get; set; }
-        public double Height { get; set; }
+        public double Width { get; init; }
+        public double Height { get; init; }
     }
 }
 

@@ -13,7 +13,7 @@ public partial class AnchorageGrid : IAsyncDisposable
 
     [Parameter] public int AnchorageWidth { get; set; }
     [Parameter] public int AnchorageHeight { get; set; }
-    [Parameter] public List<PlacedVessel> PlacedVessels { get; set; } = new();
+    [Parameter] public List<PlacedVessel> PlacedVessels { get; set; } = [];
     [Parameter] public EventCallback<PlacedVessel> OnVesselPlaced { get; set; }
     [Parameter] public EventCallback<string> OnVesselRemoved { get; set; }
 
@@ -85,10 +85,12 @@ public partial class AnchorageGrid : IAsyncDisposable
         {
             x = Math.Max(0, AnchorageWidth - finalEffectiveWidth);
         }
+
         if (y + finalEffectiveHeight > AnchorageHeight)
         {
             y = Math.Max(0, AnchorageHeight - finalEffectiveHeight);
         }
+
         if (x < 0) x = 0;
         if (y < 0) y = 0;
 
@@ -104,18 +106,12 @@ public partial class AnchorageGrid : IAsyncDisposable
 
         // Check for overlaps - use the same logic as preview check
         var vesselPositions = vessel.GetOccupiedPositions();
-        foreach (var existingVessel in PlacedVessels)
+        if ((from existingVessel in PlacedVessels
+                where existingVessel.Id != vessel.Id
+                select existingVessel.GetOccupiedPositions())
+            .Any(existingPositions => vesselPositions.Intersect(existingPositions).Any()))
         {
-            if (existingVessel.Id == vessel.Id)
-            {
-                continue; // Skip the same vessel (in case of moving)
-            }
-
-            var existingPositions = existingVessel.GetOccupiedPositions();
-            if (vesselPositions.Intersect(existingPositions).Any())
-            {
-                return; // Collision detected, can't place
-            }
+            return; // Collision detected, can't place
         }
 
         // Check if this vessel ID is already placed - if so, it means we're trying to move it
@@ -155,9 +151,9 @@ public partial class AnchorageGrid : IAsyncDisposable
 
         // Calculate positions this vessel would occupy
         var tempPositions = new HashSet<(int X, int Y)>();
-        for (int dx = 0; dx < width; dx++)
+        for (var dx = 0; dx < width; dx++)
         {
-            for (int dy = 0; dy < height; dy++)
+            for (var dy = 0; dy < height; dy++)
             {
                 var posX = x + dx;
                 var posY = y + dy;
@@ -178,36 +174,23 @@ public partial class AnchorageGrid : IAsyncDisposable
         }
 
         // Check for overlaps with existing vessels (excluding the vessel being moved if specified)
-        if (PlacedVessels.Count > 0)
-        {
-            foreach (var existingVessel in PlacedVessels)
-            {
-                // Skip the vessel being dragged if it's already placed (for moving)
-                if (excludeVesselId != null && !string.IsNullOrEmpty(excludeVesselId) &&
-                    existingVessel.Id == excludeVesselId)
-                {
-                    continue;
-                }
-
-                // Get positions occupied by existing vessel
-                var existingPositions = existingVessel.GetOccupiedPositions();
-
-                // Check for any intersection
-                if (existingPositions.Count > 0 &&
-                    tempPositions.Intersect(existingPositions).Any())
-                {
-                    return Task.FromResult(true); // Collision detected
-                }
-            }
-        }
-
-        return Task.FromResult(false); // No collision - placement is valid
+        if (PlacedVessels.Count <= 0) return Task.FromResult(false); // No collision - placement is valid
+        return Task.FromResult((from existingVessel in PlacedVessels
+            where excludeVesselId == null || string.IsNullOrEmpty(excludeVesselId) ||
+                  existingVessel.Id != excludeVesselId
+            select existingVessel.GetOccupiedPositions()).Any(existingPositions => existingPositions.Count > 0 &&
+            tempPositions
+                .Intersect(existingPositions)
+                .Any()));
+        // Collision detected
+        // No collision - placement is valid
     }
 
     public ValueTask DisposeAsync()
     {
         dotNetHelper?.Dispose();
+
+        GC.SuppressFinalize(this);
         return ValueTask.CompletedTask;
     }
 }
-

@@ -5,13 +5,13 @@ using Microsoft.AspNetCore.Components;
 
 namespace BlazorApp.Pages;
 
-public partial class VesselPlacement
+partial class VesselPlacement
 {
     [Inject] private IFleetApiService FleetApiService { get; set; } = null!;
 
     private FleetData? fleetData;
-    private List<PlacedVessel> placedVessels = new();
-    private List<AvailableVessel> availableVessels = new();
+    private readonly List<PlacedVessel> placedVessels = [];
+    private List<AvailableVessel> availableVessels = [];
     private bool isLoading = true;
     private bool isComplete;
     private AnchorageGrid? anchorageGridRef;
@@ -74,7 +74,7 @@ public partial class VesselPlacement
         var canvasHeight = fleetData.AnchorageSize.Height;
 
         // If no fleets from API, return empty list
-        if (!fleetData.Fleets.Any())
+        if (fleetData.Fleets.Count == 0)
         {
             return;
         }
@@ -99,21 +99,22 @@ public partial class VesselPlacement
             }
 
             // Create the specified number of vessels for this fleet with exact API dimensions
-            for (int i = 0; i < shipCount; i++)
+            for (var i = 0; i < shipCount; i++)
             {
                 var uniqueId = Guid.NewGuid().ToString();
 
                 // Randomly determine initial rotation, but ensure it fits
                 var isRotated = random.Next(2) == 1;
 
-                // If one orientation doesn't fit, force the other
-                if (isRotated && !fitsRotated && fitsNormal)
+                switch (isRotated)
                 {
-                    isRotated = false;
-                }
-                else if (!isRotated && !fitsNormal && fitsRotated)
-                {
-                    isRotated = true;
+                    // If one orientation doesn't fit, force the other
+                    case true when !fitsRotated && fitsNormal:
+                        isRotated = false;
+                        break;
+                    case false when !fitsNormal && fitsRotated:
+                        isRotated = true;
+                        break;
                 }
 
                 var vessel = new AvailableVessel
@@ -147,51 +148,45 @@ public partial class VesselPlacement
             availableVessels.Remove(availableVessel);
             placedVessels.Add(vessel);
             CheckCompletion();
-            StateHasChanged();
         }
         else
         {
             // Don't add if already placed or not found in available
-            if (!placedVessels.Any(pv => pv.Id == vessel.Id))
-            {
-                placedVessels.Add(vessel);
-                StateHasChanged();
-            }
+            if (placedVessels.Any(pv => pv.Id == vessel.Id)) return;
+            placedVessels.Add(vessel);
         }
+
+        StateHasChanged();
     }
 
     private void HandleVesselRemoved(string vesselId)
     {
         var vessel = placedVessels.FirstOrDefault(v => v.Id == vesselId);
-        if (vessel != null)
+        if (vessel == null) return;
+        placedVessels.Remove(vessel);
+        // Add back to available vessels
+        availableVessels.Add(new AvailableVessel
         {
-            placedVessels.Remove(vessel);
-            // Add back to available vessels
-            availableVessels.Add(new AvailableVessel
-            {
-                Id = vesselId,
-                Dimensions = vessel.Dimensions,
-                Designation = vessel.Designation,
-                IsRotated = vessel.IsRotated
-            });
-            CheckCompletion();
-            StateHasChanged();
-        }
+            Id = vesselId,
+            Dimensions = vessel.Dimensions,
+            Designation = vessel.Designation,
+            IsRotated = vessel.IsRotated
+        });
+        CheckCompletion();
+        StateHasChanged();
     }
 
     private void HandleVesselRotate(string vesselId)
     {
         var vessel = availableVessels.FirstOrDefault(v => v.Id == vesselId);
-        if (vessel != null)
-        {
-            vessel.IsRotated = !vessel.IsRotated;
-            StateHasChanged();
-        }
+        if (vessel == null) return;
+        vessel.IsRotated = !vessel.IsRotated;
+        StateHasChanged();
     }
 
     private void CheckCompletion()
     {
-        isComplete = !availableVessels.Any() && fleetData != null;
+        isComplete = availableVessels.Count == 0 && fleetData != null;
     }
 
     private async Task ResetAndLoadNewFleet()

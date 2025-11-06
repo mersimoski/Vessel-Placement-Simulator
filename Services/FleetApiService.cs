@@ -6,10 +6,8 @@ namespace BlazorApp.Services;
 /// <summary>
 /// Service implementation for fetching fleet data from the ESA API.
 /// </summary>
-public class FleetApiService : IFleetApiService
+public class FleetApiService(HttpClient httpClient, bool useProxy = false) : IFleetApiService
 {
-    private readonly HttpClient httpClient;
-    private readonly bool useProxy;
     private static readonly JsonSerializerOptions SerializerOptions = new()
     {
         PropertyNameCaseInsensitive = true
@@ -17,12 +15,6 @@ public class FleetApiService : IFleetApiService
 
     private const string ApiEndpoint = "https://esa.instech.no/api/fleets/random";
     private const string CorsProxyEndpoint = "https://api.allorigins.win/raw?url=";
-
-    public FleetApiService(HttpClient httpClient, bool useProxy = false)
-    {
-        this.httpClient = httpClient;
-        this.useProxy = useProxy;
-    }
 
     public async Task<FleetData?> GetRandomFleetAsync(CancellationToken cancellationToken = default)
     {
@@ -44,11 +36,9 @@ public class FleetApiService : IFleetApiService
             var fleetData = await JsonSerializer.DeserializeAsync<FleetData>(responseStream, SerializerOptions, cancellationToken);
 
             // Shuffle fleets client-side for additional randomness
-            if (fleetData != null && fleetData.Fleets.Count > 0)
-            {
-                var random = new Random();
-                fleetData.Fleets = fleetData.Fleets.OrderBy(_ => random.Next()).ToList();
-            }
+            if (fleetData == null || fleetData.Fleets.Count <= 0) return fleetData;
+            var random = new Random();
+            fleetData.Fleets = fleetData.Fleets.OrderBy(_ => random.Next()).ToList();
 
             return fleetData;
         }

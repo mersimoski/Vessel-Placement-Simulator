@@ -5,8 +5,8 @@ namespace BlazorApp.Models;
 /// </summary>
 public class FleetData
 {
-    public AnchorageSize AnchorageSize { get; set; } = new();
-    public List<Fleet> Fleets { get; set; } = new();
+    public AnchorageSize AnchorageSize { get; init; } = new();
+    public List<Fleet> Fleets { get; set; } = [];
 }
 
 /// <summary>
@@ -14,15 +14,12 @@ public class FleetData
 /// </summary>
 public class AnchorageSize
 {
+    public AnchorageSize() { }
+
     public AnchorageSize(int width, int height)
     {
         Width = width;
         Height = height;
-    }
-
-    public AnchorageSize()
-    {
-        // Default constructor for JSON deserialization
     }
 
     public int Width { get; set; }
@@ -32,13 +29,16 @@ public class AnchorageSize
 /// <summary>
 /// Represents a fleet of ships with the same dimensions.
 /// </summary>
+// ReSharper disable once UnusedType.Global - Used by JSON deserializer
 public class Fleet
 {
+    // ReSharper disable once UnusedMember.Global - Used by JSON deserializer
     public Fleet()
     {
         // Default constructor for JSON deserialization
     }
 
+    // ReSharper disable once UnusedMember.Global - Used by code
     public Fleet(int shipCount)
     {
         ShipCount = shipCount;

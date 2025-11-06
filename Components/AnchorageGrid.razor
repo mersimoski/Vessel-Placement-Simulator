@@ -3,17 +3,15 @@
          @ref="gridElement"
          style="grid-template-columns: repeat(@AnchorageWidth, 1fr); grid-template-rows: repeat(@AnchorageHeight, 1fr);"
          id="anchorage-grid-@(GetHashCode())">
-        @for (int y = 0; y < AnchorageHeight; y++)
+        @for (var y = 0; y < AnchorageHeight; y++)
         {
-            @for (int x = 0; x < AnchorageWidth; x++)
+            @for (var x = 0; x < AnchorageWidth; x++)
             {
-                var cellX = x;
-                var cellY = y;
                 <div class="grid-cell drop-zone"
-                     data-x="@cellX"
-                     data-y="@cellY"
-                     data-grid-x="@cellX"
-                     data-grid-y="@cellY">
+                     data-x="@x"
+                     data-y="@y"
+                     data-grid-x="@x"
+                     data-grid-y="@y">
                 </div>
             }
         }
@@ -33,7 +31,7 @@
                     // Use a scale factor to make numbers reasonable (multiply dimensions by 10)
                     var width = vessel.EffectiveWidth;
                     var height = vessel.EffectiveHeight;
-                    var scale = 10.0;
+                    const double scale = 10.0;
                     var viewBoxWidth = width * scale;
                     var viewBoxHeight = height * scale;
                 }
@@ -47,9 +45,9 @@
                             <!-- Superstructure -->
                             <rect x="@(viewBoxWidth * 0.1)" y="@(viewBoxHeight * 0.08)" width="@(viewBoxWidth * 0.8)" height="@(viewBoxHeight * 0.33)" fill="#ffffff" rx="@(viewBoxWidth * 0.02)"/>
                             <!-- Windows -->
-                            @for (int i = 0; i < Math.Min(5, width); i++)
+                            @for (var i = 0; i < Math.Min(5, width); i++)
                             {
-                                var windowX = viewBoxWidth * (0.2 + (i * 0.15));
+                                var windowX = viewBoxWidth * (0.2 + i * 0.15);
                                 <circle cx="@windowX" cy="@(viewBoxHeight * 0.25)" r="@(viewBoxWidth * 0.025)" fill="#6c757d"/>
                             }
                             <!-- Mast -->
@@ -67,9 +65,9 @@
                             <!-- Superstructure -->
                             <rect x="@(viewBoxWidth * 0.08)" y="@(viewBoxHeight * 0.1)" width="@(viewBoxWidth * 0.33)" height="@(viewBoxHeight * 0.8)" fill="#ffffff" rx="@(viewBoxHeight * 0.02)"/>
                             <!-- Windows -->
-                            @for (int i = 0; i < Math.Min(4, height); i++)
+                            @for (var i = 0; i < Math.Min(4, height); i++)
                             {
-                                var windowY = viewBoxHeight * (0.25 + (i * 0.15));
+                                var windowY = viewBoxHeight * (0.25 + i * 0.15);
                                 <circle cx="@(viewBoxWidth * 0.25)" cy="@windowY" r="@(viewBoxHeight * 0.025)" fill="#6c757d"/>
                             }
                             <!-- Mast -->
