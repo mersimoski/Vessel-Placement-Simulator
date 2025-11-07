@@ -1,29 +1,29 @@
 using System.Net;
-using System.Net.Http;
 using System.Text;
 using BlazorApp.Services;
-using Xunit;
 
 namespace BlazorApp.Tests;
 
 public class FleetApiServiceTests
 {
-    private const string SampleResponseJson = @"{
-  ""anchorageSize"": {
-    ""width"": 12,
-    ""height"": 15
-  },
-  ""fleets"": [
-    {
-      ""singleShipDimensions"": { ""width"": 6, ""height"": 5 },
-      ""shipDesignation"": ""LNG Unit"",
-      ""shipCount"": 2
-    }
-  ]
-}";
+    private const string SampleResponseJson = """
+                                              {
+                                                "anchorageSize": {
+                                                  "width": 12,
+                                                  "height": 15
+                                                },
+                                                "fleets": [
+                                                  {
+                                                    "singleShipDimensions": { "width": 6, "height": 5 },
+                                                    "shipDesignation": "LNG Unit",
+                                                    "shipCount": 2
+                                                  }
+                                                ]
+                                              }
+                                              """;
 
     [Fact]
-    public async Task GetRandomFleetAsync_UsesDirectEndpoint_WhenProxyDisabled()
+    public async Task GetRandomFleetAsyncUsesDirectEndpointWhenProxyDisabled()
     {
         // Arrange
         var handler = new TestHttpMessageHandler(_ => SuccessResponse());
@@ -43,7 +43,7 @@ public class FleetApiServiceTests
     }
 
     [Fact]
-    public async Task GetRandomFleetAsync_UsesProxyEndpoint_WhenProxyEnabled()
+    public async Task GetRandomFleetAsyncUsesProxyEndpointWhenProxyEnabled()
     {
         // Arrange
         var handler = new TestHttpMessageHandler(_ => SuccessResponse());
@@ -63,7 +63,7 @@ public class FleetApiServiceTests
     }
 
     [Fact]
-    public async Task GetRandomFleetAsync_ReturnsNull_WhenHttpRequestFails()
+    public async Task GetRandomFleetAsyncReturnsNullWhenHttpRequestFails()
     {
         // Arrange - return 500 so EnsureSuccessStatusCode throws
         var handler = new TestHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.InternalServerError));
@@ -77,7 +77,7 @@ public class FleetApiServiceTests
     }
 
     [Fact]
-    public async Task GetRandomFleetAsync_ReturnsNull_WhenDeserializationFails()
+    public async Task GetRandomFleetAsyncReturnsNullWhenDeserializationFails()
     {
         // Arrange - respond with invalid JSON
         var handler = new TestHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
@@ -99,21 +99,15 @@ public class FleetApiServiceTests
         Content = new StringContent(SampleResponseJson, Encoding.UTF8, "application/json")
     };
 
-    private sealed class TestHttpMessageHandler : HttpMessageHandler
+    private sealed class TestHttpMessageHandler(Func<HttpRequestMessage, HttpResponseMessage> handler)
+        : HttpMessageHandler
     {
-        private readonly Func<HttpRequestMessage, HttpResponseMessage> _handler;
-
-        public List<HttpRequestMessage> Requests { get; } = new();
-
-        public TestHttpMessageHandler(Func<HttpRequestMessage, HttpResponseMessage> handler)
-        {
-            _handler = handler;
-        }
+        public List<HttpRequestMessage> Requests { get; } = [];
 
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             Requests.Add(request);
-            return Task.FromResult(_handler(request));
+            return Task.FromResult(handler(request));
         }
     }
 }

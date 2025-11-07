@@ -1,5 +1,4 @@
 using BlazorApp.Models;
-using Xunit;
 
 namespace BlazorApp.Tests;
 
@@ -10,7 +9,7 @@ namespace BlazorApp.Tests;
 public class PlacedVesselTests
 {
     [Fact]
-    public void GetOccupiedPositions_ReturnsCorrectPositions_ForNonRotatedVessel()
+    public void GetOccupiedPositionsReturnsCorrectPositionsForNonRotatedVessel()
     {
         // Arrange
         var vessel = new PlacedVessel
@@ -35,7 +34,7 @@ public class PlacedVesselTests
     }
 
     [Fact]
-    public void GetOccupiedPositions_ReturnsCorrectPositions_ForRotatedVessel()
+    public void GetOccupiedPositionsReturnsCorrectPositionsForRotatedVessel()
     {
         // Arrange
         var vessel = new PlacedVessel
@@ -58,7 +57,7 @@ public class PlacedVesselTests
     }
 
     [Fact]
-    public void EffectiveWidth_ReturnsWidth_WhenNotRotated()
+    public void EffectiveWidthReturnsWidthWhenNotRotated()
     {
         // Arrange
         var vessel = new PlacedVessel
@@ -72,7 +71,7 @@ public class PlacedVesselTests
     }
 
     [Fact]
-    public void EffectiveWidth_ReturnsHeight_WhenRotated()
+    public void EffectiveWidthReturnsHeightWhenRotated()
     {
         // Arrange
         var vessel = new PlacedVessel
@@ -86,7 +85,7 @@ public class PlacedVesselTests
     }
 
     [Fact]
-    public void EffectiveHeight_ReturnsHeight_WhenNotRotated()
+    public void EffectiveHeightReturnsHeightWhenNotRotated()
     {
         // Arrange
         var vessel = new PlacedVessel
@@ -100,7 +99,7 @@ public class PlacedVesselTests
     }
 
     [Fact]
-    public void EffectiveHeight_ReturnsWidth_WhenRotated()
+    public void EffectiveHeightReturnsWidthWhenRotated()
     {
         // Arrange
         var vessel = new PlacedVessel
@@ -114,7 +113,7 @@ public class PlacedVesselTests
     }
 
     [Fact]
-    public void OverlapsWith_ReturnsTrue_WhenVesselsOverlap()
+    public void OverlapsWithReturnsTrueWhenVesselsOverlap()
     {
         // Arrange
         var vessel1 = new PlacedVessel
@@ -141,7 +140,7 @@ public class PlacedVesselTests
     }
 
     [Fact]
-    public void OverlapsWith_ReturnsFalse_WhenVesselsDoNotOverlap()
+    public void OverlapsWithReturnsFalseWhenVesselsDoNotOverlap()
     {
         // Arrange
         var vessel1 = new PlacedVessel
@@ -168,7 +167,7 @@ public class PlacedVesselTests
     }
 
     [Fact]
-    public void OverlapsWith_ReturnsFalse_WhenVesselsAreAdjacent()
+    public void OverlapsWithReturnsFalseWhenVesselsAreAdjacent()
     {
         // Arrange - Vessels touching at edges should not overlap
         var vessel1 = new PlacedVessel
@@ -192,7 +191,7 @@ public class PlacedVesselTests
     }
 
     [Fact]
-    public void OverlapsWith_ReturnsTrue_WhenVesselsShareSamePosition()
+    public void OverlapsWithReturnsTrueWhenVesselsShareSamePosition()
     {
         // Arrange
         var vessel1 = new PlacedVessel
@@ -219,7 +218,7 @@ public class PlacedVesselTests
     }
 
     [Fact]
-    public void OverlapsWith_ReturnsTrue_WhenRotatedVesselOverlaps()
+    public void OverlapsWithReturnsTrueWhenRotatedVesselOverlaps()
     {
         // Arrange
         var vessel1 = new PlacedVessel
@@ -246,7 +245,7 @@ public class PlacedVesselTests
     }
 
     [Fact]
-    public void IsWithinBounds_ReturnsTrue_WhenVesselIsWithinBounds()
+    public void IsWithinBoundsReturnsTrueWhenVesselIsWithinBounds()
     {
         // Arrange
         var vessel = new PlacedVessel
@@ -265,7 +264,7 @@ public class PlacedVesselTests
     }
 
     [Fact]
-    public void IsWithinBounds_ReturnsFalse_WhenVesselExceedsWidth()
+    public void IsWithinBoundsReturnsFalseWhenVesselExceedsWidth()
     {
         // Arrange
         var vessel = new PlacedVessel
@@ -284,7 +283,7 @@ public class PlacedVesselTests
     }
 
     [Fact]
-    public void IsWithinBounds_ReturnsFalse_WhenVesselExceedsHeight()
+    public void IsWithinBoundsReturnsFalseWhenVesselExceedsHeight()
     {
         // Arrange
         var vessel = new PlacedVessel
@@ -303,7 +302,7 @@ public class PlacedVesselTests
     }
 
     [Fact]
-    public void IsWithinBounds_ReturnsFalse_WhenVesselIsAtNegativeX()
+    public void IsWithinBoundsReturnsFalseWhenVesselIsAtNegativeX()
     {
         // Arrange
         var vessel = new PlacedVessel
@@ -322,7 +321,7 @@ public class PlacedVesselTests
     }
 
     [Fact]
-    public void IsWithinBounds_ReturnsFalse_WhenVesselIsAtNegativeY()
+    public void IsWithinBoundsReturnsFalseWhenVesselIsAtNegativeY()
     {
         // Arrange
         var vessel = new PlacedVessel
@@ -341,7 +340,7 @@ public class PlacedVesselTests
     }
 
     [Fact]
-    public void IsWithinBounds_ReturnsTrue_WhenVesselFitsExactlyAtBoundary()
+    public void IsWithinBoundsReturnsTrueWhenVesselFitsExactlyAtBoundary()
     {
         // Arrange - Vessel at (0,0) with size matching anchorage exactly
         var vessel = new PlacedVessel
@@ -360,7 +359,7 @@ public class PlacedVesselTests
     }
 
     [Fact]
-    public void IsWithinBounds_ReturnsFalse_WhenRotatedVesselExceedsHeight()
+    public void IsWithinBoundsReturnsFalseWhenRotatedVesselExceedsHeight()
     {
         // Arrange - Rotate a tall vessel so the height spills out of bounds
         var vessel = new PlacedVessel
@@ -379,7 +378,7 @@ public class PlacedVesselTests
     }
 
     [Fact]
-    public void IsWithinBounds_ReturnsFalse_WhenRotatedVesselExceedsWidth()
+    public void IsWithinBoundsReturnsFalseWhenRotatedVesselExceedsWidth()
     {
         // Arrange
         var vessel = new PlacedVessel
