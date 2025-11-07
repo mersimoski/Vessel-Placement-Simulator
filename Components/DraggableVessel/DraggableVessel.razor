@@ -1,0 +1,26 @@
+@namespace BlazorApp.Components
+@using BlazorApp.Features.VesselPlacement.Components
+
+<div class="vessel-card-wrapper mb-3">
+    <div class="vessel-info mb-1">
+        <div class="fw-bold">@Vessel.Designation</div>
+        <small class="text-muted">
+            <strong>@Vessel.EffectiveWidth × @Vessel.EffectiveHeight</strong> grid cells
+            @if (Vessel.IsRotated)
+            {
+                <span class="badge bg-info ms-1">Rotated</span>
+            }
+        </small>
+    </div>
+    <div class="draggable-vessel vessel-card"
+         draggable="true"
+         @ondblclick="HandleDoubleClick"
+         @ref="vesselElement"
+         data-vessel-id="@Vessel.Id"
+         style="@VesselCardStyle">
+        <VesselIcon 
+            Width="@Vessel.EffectiveWidth" 
+            Height="@Vessel.EffectiveHeight" />
+    </div>
+</div>
+

@@ -1,0 +1,30 @@
+@namespace BlazorApp.Features.VesselPlacement.Components
+@using BlazorApp.Components
+
+<div class="mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h3 class="mb-0">Available Vessels</h3>
+        <small class="text-muted">Drag to place • Double-click to rotate</small>
+    </div>
+    <div class="vessel-list-container">
+        <div class="d-flex flex-column gap-3">
+            @if (HasVessels)
+            {
+                @foreach (var vessel in AvailableVessels)
+                {
+                    <DraggableVessel 
+                        @key="@vessel.Id"
+                        Vessel="@vessel"
+                        OnRotate="HandleVesselRotate"
+                        AnchorageWidth="@AnchorageWidth"
+                        AnchorageHeight="@AnchorageHeight"
+                        GridElementId="@GridElementId" />
+                }
+            }
+            else
+            {
+                <p class="text-muted">No vessels available</p>
+            }
+        </div>
+    </div>
+</div>

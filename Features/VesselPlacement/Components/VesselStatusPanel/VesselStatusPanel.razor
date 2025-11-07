@@ -1,0 +1,31 @@
+@namespace BlazorApp.Features.VesselPlacement.Components
+
+<div class="card">
+    <div class="card-header">
+        <strong>Status (Vessels remaining):</strong>
+    </div>
+    <div class="card-body">
+        @if (HasVessels)
+        {
+            @foreach (var group in VesselGroups)
+            {
+                <p class="mb-1">
+                    <strong>@group.Count</strong> vessel(s) with size 
+                    <strong>(@group.Width × @group.Height)</strong>
+                    @if (!string.IsNullOrEmpty(group.Designation))
+                    {
+                        <br/><small class="text-muted">@group.Designation</small>
+                    }
+                </p>
+            }
+            <hr/>
+            <p class="mb-0">
+                <strong>Total:</strong> @TotalVessels vessel(s) remaining
+            </p>
+        }
+        else
+        {
+            <p class="mb-0 text-muted">No vessels remaining</p>
+        }
+    </div>
+</div>

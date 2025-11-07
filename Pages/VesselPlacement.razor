@@ -1,23 +1,18 @@
 @page "/"
+@using BlazorApp.Features.VesselPlacement.Components
 
 <PageTitle>Vessel Placement</PageTitle>
 
 <div class="container-fluid p-4">
-    @if (isLoading)
+    @if (IsLoading)
     {
-        <div class="text-center">
-            <div class="spinner-border" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-            <p class="mt-2">Loading fleet data...</p>
-        </div>
+        <LoadingSpinner Message="Loading fleet data..." />
     }
-    else if (fleetData == null)
+    else if (FleetData == null)
     {
-        <div class="alert alert-danger" role="alert">
-            Failed to load fleet data. Please try again.
-            <button class="btn btn-primary mt-2" @onclick="LoadFleetData">Try Again</button>
-        </div>
+        <ErrorDisplay 
+            Message="Failed to load fleet data. Please try again." 
+            OnRetry="LoadFleetData" />
     }
     else
     {
@@ -27,97 +22,37 @@
                 <h3 class="mb-3">Anchorage</h3>
                 <AnchorageGrid 
                     @ref="anchorageGridRef"
-                    AnchorageWidth="@fleetData.AnchorageSize.Width"
-                    AnchorageHeight="@fleetData.AnchorageSize.Height"
-                    PlacedVessels="@placedVessels"
+                    AnchorageWidth="@FleetData.AnchorageSize.Width"
+                    AnchorageHeight="@FleetData.AnchorageSize.Height"
+                    PlacedVessels="@PlacedVessels"
                     OnVesselPlaced="HandleVesselPlaced"
                     OnVesselRemoved="HandleVesselRemoved" />
             </div>
 
-        <!-- Vessel Staging Area -->
-        <div class="col-lg-6">
-            @if (isComplete)
-            {
-                <!-- Completion Message -->
-                <div class="card mb-4 border-success">
-                    <div class="card-body text-center">
-                        <div class="display-4 mb-3">🎉</div>
-                        <h4 class="card-title text-success mb-3">You did it!</h4>
-                        <p class="card-text text-muted">All vessels have been placed successfully in the anchorage!</p>
-                        <button class="btn btn-primary btn-lg w-100" @onclick="ResetAndLoadNewFleet">
-                            Try again!
-                        </button>
-                    </div>
-                </div>
-            }
-            else
-            {
-                <div class="mb-4">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h3 class="mb-0">Available Vessels</h3>
-                        <small class="text-muted">Drag to place • Double-click to rotate</small>
-                    </div>
-                    <div class="vessel-list-container">
-                        <div class="d-flex flex-column gap-3">
-                            @if (availableVessels.Any())
-                            {
-                                @foreach (var vessel in availableVessels)
-                                {
-                                    <DraggableVessel 
-                                        @key="@vessel.Id"
-                                        Vessel="@vessel"
-                                        OnRotate="HandleVesselRotate"
-                                        AnchorageWidth="@fleetData.AnchorageSize.Width"
-                                        AnchorageHeight="@fleetData.AnchorageSize.Height"
-                                        GridElementId="@gridElementId" />
-                                }
-                            }
-                            else
-                            {
-                                <p class="text-muted">No vessels available</p>
-                            }
-                        </div>
-                    </div>
-                </div>
+            <!-- Vessel Staging Area -->
+            <div class="col-lg-6">
+                @if (IsComplete)
+                {
+                    <CompletionMessage OnReset="ResetAndLoadNewFleet" />
+                }
+                else
+                {
+                    <VesselList 
+                        AvailableVessels="@AvailableVessels"
+                        AnchorageWidth="@FleetData.AnchorageSize.Width"
+                        AnchorageHeight="@FleetData.AnchorageSize.Height"
+                        GridElementId="@GridElementId"
+                        OnVesselRotate="HandleVesselRotate" />
 
-                <!-- Status Display -->
-                <div class="card">
-                    <div class="card-header">
-                        <strong>Status (Vessels remaining):</strong>
-                    </div>
-                    <div class="card-body">
-                        @if (availableVessels.Any())
-                        {
-                            @foreach (var group in availableVessels.GroupBy(v => new { v.Dimensions.Width, v.Dimensions.Height, v.Designation }))
-                            {
-                                <p class="mb-1">
-                                    <strong>@group.Count()</strong> vessel(s) with size 
-                                    <strong>(@group.Key.Width × @group.Key.Height)</strong>
-                                    @if (!string.IsNullOrEmpty(group.Key.Designation))
-                                    {
-                                        <br/><small class="text-muted">@group.Key.Designation</small>
-                                    }
-                                </p>
-                            }
-                            <hr/>
-                            <p class="mb-0">
-                                <strong>Total:</strong> @availableVessels.Count vessel(s) remaining
-                            </p>
-                        }
-                        else
-                        {
-                            <p class="mb-0 text-muted">No vessels remaining</p>
-                        }
-                    </div>
-                </div>
+                    <VesselStatusPanel AvailableVessels="@AvailableVessels" />
 
-                <!-- Try Again Button -->
-                <button class="btn btn-secondary mt-3 w-100" @onclick="ResetAndLoadNewFleet">
-                    Try again!
-                </button>
-            }
-        </div>
+                    <button class="btn btn-secondary mt-3 w-100" @onclick="ResetAndLoadNewFleet">
+                        Try again!
+                    </button>
+                }
+            </div>
         </div>
     }
 </div>
+
 

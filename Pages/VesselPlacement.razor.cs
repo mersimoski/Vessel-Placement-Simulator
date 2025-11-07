@@ -5,17 +5,31 @@ using Microsoft.AspNetCore.Components;
 
 namespace BlazorApp.Pages;
 
+/// <summary>
+/// Main page component for the Vessel Placement application.
+/// Manages the overall state and coordination between the anchorage grid and available vessels.
+/// </summary>
 partial class VesselPlacement
 {
     [Inject] private IFleetApiService FleetApiService { get; set; } = null!;
 
+    private AnchorageGrid? anchorageGridRef;
+
+    // State properties
     private FleetData? fleetData;
     private readonly List<PlacedVessel> placedVessels = [];
     private List<AvailableVessel> availableVessels = [];
     private bool isLoading = true;
     private bool isComplete;
-    private AnchorageGrid? anchorageGridRef;
     private string gridElementId = string.Empty;
+
+    // Public properties for binding
+    private FleetData? FleetData => fleetData;
+    private List<PlacedVessel> PlacedVessels => placedVessels;
+    private List<AvailableVessel> AvailableVessels => availableVessels;
+    private bool IsLoading => isLoading;
+    private bool IsComplete => isComplete;
+    private string GridElementId => gridElementId;
 
     protected override async Task OnInitializedAsync()
     {

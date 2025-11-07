@@ -1,0 +1,42 @@
+@namespace BlazorApp.Features.VesselPlacement.Components
+
+@if (IsHorizontal)
+{
+    <!-- Horizontal vessel (wider than tall) -->
+    <svg viewBox="0 0 @ViewBoxWidth @ViewBoxHeight" class="vessel-icon" preserveAspectRatio="xMidYMid meet">
+        <!-- Hull -->
+        <rect x="@(ViewBoxWidth * 0.05)" y="@(ViewBoxHeight * 0.33)" width="@(ViewBoxWidth * 0.9)" height="@(ViewBoxHeight * 0.42)" fill="#dc3545" rx="@(ViewBoxWidth * 0.04)"/>
+        <!-- Superstructure -->
+        <rect x="@(ViewBoxWidth * 0.1)" y="@(ViewBoxHeight * 0.08)" width="@(ViewBoxWidth * 0.8)" height="@(ViewBoxHeight * 0.33)" fill="#ffffff" rx="@(ViewBoxWidth * 0.02)"/>
+        <!-- Windows -->
+        @for (var i = 0; i < WindowCount; i++)
+        {
+            var windowX = ViewBoxWidth * (0.2 + i * 0.15);
+            <circle cx="@windowX" cy="@(ViewBoxHeight * 0.25)" r="@(ViewBoxWidth * 0.025)" fill="#6c757d"/>
+        }
+        <!-- Mast -->
+        <line x1="@(ViewBoxWidth * 0.5)" y1="0" x2="@(ViewBoxWidth * 0.5)" y2="@(ViewBoxHeight * 0.08)" stroke="#6c757d" stroke-width="@(ViewBoxWidth * 0.015)"/>
+        <!-- Water -->
+        <ellipse cx="@(ViewBoxWidth * 0.5)" cy="@(ViewBoxHeight * 0.92)" rx="@(ViewBoxWidth * 0.5)" ry="@(ViewBoxHeight * 0.08)" fill="#0dcaf0" opacity="0.5"/>
+    </svg>
+}
+else
+{
+    <!-- Vertical vessel (taller than wide) -->
+    <svg viewBox="0 0 @ViewBoxWidth @ViewBoxHeight" class="vessel-icon" preserveAspectRatio="xMidYMid meet">
+        <!-- Hull -->
+        <rect x="@(ViewBoxWidth * 0.33)" y="@(ViewBoxHeight * 0.05)" width="@(ViewBoxWidth * 0.42)" height="@(ViewBoxHeight * 0.9)" fill="#dc3545" rx="@(ViewBoxHeight * 0.04)"/>
+        <!-- Superstructure -->
+        <rect x="@(ViewBoxWidth * 0.08)" y="@(ViewBoxHeight * 0.1)" width="@(ViewBoxWidth * 0.33)" height="@(ViewBoxHeight * 0.8)" fill="#ffffff" rx="@(ViewBoxHeight * 0.02)"/>
+        <!-- Windows -->
+        @for (var i = 0; i < WindowCount; i++)
+        {
+            var windowY = ViewBoxHeight * (0.25 + i * 0.15);
+            <circle cx="@(ViewBoxWidth * 0.25)" cy="@windowY" r="@(ViewBoxHeight * 0.025)" fill="#6c757d"/>
+        }
+        <!-- Mast -->
+        <line x1="0" y1="@(ViewBoxHeight * 0.5)" x2="@(ViewBoxWidth * 0.08)" y2="@(ViewBoxHeight * 0.5)" stroke="#6c757d" stroke-width="@(ViewBoxHeight * 0.015)"/>
+        <!-- Water -->
+        <ellipse cx="@(ViewBoxWidth * 0.83)" cy="@(ViewBoxHeight * 0.5)" rx="@(ViewBoxWidth * 0.08)" ry="@(ViewBoxHeight * 0.5)" fill="#0dcaf0" opacity="0.5"/>
+    </svg>
+}
