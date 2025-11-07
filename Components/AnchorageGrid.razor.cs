@@ -1,3 +1,4 @@
+using System.Globalization;
 using BlazorApp.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
@@ -31,8 +32,13 @@ public partial class AnchorageGrid : IAsyncDisposable
             {
                 // Small delay to ensure DOM is ready
                 await Task.Delay(10);
-                await JsRuntime.InvokeVoidAsync("setupGridDropHandlers", gridElement, AnchorageWidth, AnchorageHeight,
-                    dotNetHelper);
+                await JsRuntime.InvokeVoidAsync(
+                    "setupGridDropHandlers",
+                    gridElement,
+                    AnchorageWidth,
+                    AnchorageHeight,
+                    dotNetHelper
+                );
             }
         }
     }
@@ -52,13 +58,19 @@ public partial class AnchorageGrid : IAsyncDisposable
         if (parts.Length < 5) return;
 
         var vesselId = parts[0];
-        var effectiveWidth = int.Parse(parts[1]);
-        var effectiveHeight = int.Parse(parts[2]);
+
+        // Parse integers with an explicit culture
+        if (!int.TryParse(parts[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out var effectiveWidth))
+            return;
+
+        if (!int.TryParse(parts[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out var effectiveHeight))
+            return;
+
+        // bool.Parse is culture-independent if JS sends "true"/"false"
         var isRotated = bool.Parse(parts[3]);
         var designation = parts[4];
 
         // Get original dimensions (before rotation)
-        // The effectiveWidth/effectiveHeight in the drag data already accounts for rotation
         var originalWidth = isRotated ? effectiveHeight : effectiveWidth;
         var originalHeight = isRotated ? effectiveWidth : effectiveHeight;
 
@@ -106,21 +118,17 @@ public partial class AnchorageGrid : IAsyncDisposable
 
         // Check for overlaps - use the same logic as preview check
         var vesselPositions = vessel.GetOccupiedPositions();
-        if ((from existingVessel in PlacedVessels
-                where existingVessel.Id != vessel.Id
-                select existingVessel.GetOccupiedPositions())
-            .Any(existingPositions => vesselPositions.Intersect(existingPositions).Any()))
+        if (PlacedVessels
+                .Select(existingVessel => existingVessel.GetOccupiedPositions())
+                .Any(existingPositions => vesselPositions.Intersect(existingPositions).Any()))
         {
             return; // Collision detected, can't place
         }
 
-        // Check if this vessel ID is already placed - if so, it means we're trying to move it
-        // But since vessels are removed from available when placed, this shouldn't happen for new placements
-        // Only allow moving if dragging from placed vessels (not implemented yet)
+        // Check if this vessel ID is already placed - if so, allow moving by removing the old position first
         var existing = PlacedVessels.FirstOrDefault(v => v.Id == vessel.Id);
         if (existing != null)
         {
-            // Allow moving by removing the old position first
             PlacedVessels.Remove(existing);
         }
 
@@ -142,8 +150,6 @@ public partial class AnchorageGrid : IAsyncDisposable
         }
 
         // Check bounds - ensure vessel fits completely within the grid
-        // Note: x + width must be <= AnchorageWidth (not >) because if x + width == AnchorageWidth,
-        // that means the vessel occupies cells from x to (x + width - 1), which is the last valid cell
         if (x < 0 || y < 0 || x + width > AnchorageWidth || y + height > AnchorageHeight)
         {
             return Task.FromResult(true); // Out of bounds = collision
@@ -157,8 +163,6 @@ public partial class AnchorageGrid : IAsyncDisposable
             {
                 var posX = x + dx;
                 var posY = y + dy;
-                // Double-check bounds - only add valid positions
-                // This ensures we only check positions that are actually within the grid
                 if (posX >= 0 && posX < AnchorageWidth && posY >= 0 && posY < AnchorageHeight)
                 {
                     tempPositions.Add((posX, posY));
@@ -166,30 +170,26 @@ public partial class AnchorageGrid : IAsyncDisposable
             }
         }
 
-        // If no valid positions calculated, it's a collision
-        // This should not happen if the bounds check passed, but it's a safety check
         if (tempPositions.Count == 0)
         {
             return Task.FromResult(true);
         }
 
         // Check for overlaps with existing vessels (excluding the vessel being moved if specified)
-        if (PlacedVessels.Count <= 0) return Task.FromResult(false); // No collision - placement is valid
-        return Task.FromResult((from existingVessel in PlacedVessels
-            where excludeVesselId == null || string.IsNullOrEmpty(excludeVesselId) ||
-                  existingVessel.Id != excludeVesselId
-            select existingVessel.GetOccupiedPositions()).Any(existingPositions => existingPositions.Count > 0 &&
-            tempPositions
-                .Intersect(existingPositions)
-                .Any()));
-        // Collision detected
-        // No collision - placement is valid
+        if (PlacedVessels.Count <= 0) return Task.FromResult(false);
+
+        var collision = PlacedVessels
+            .Where(existingVessel => string.IsNullOrEmpty(excludeVesselId) || existingVessel.Id != excludeVesselId)
+            .Select(existingVessel => existingVessel.GetOccupiedPositions())
+            .Any(existingPositions => existingPositions.Count > 0 &&
+                                      tempPositions.Intersect(existingPositions).Any());
+
+        return Task.FromResult(collision);
     }
 
     public ValueTask DisposeAsync()
     {
         dotNetHelper?.Dispose();
-
         GC.SuppressFinalize(this);
         return ValueTask.CompletedTask;
     }
