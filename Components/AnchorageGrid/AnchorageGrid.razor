@@ -1,5 +1,4 @@
 @namespace BlazorApp.Components
-@using BlazorApp.Features.VesselPlacement.Components
 
 <div class="anchorage-container">
     <div class="anchorage-grid"
@@ -22,8 +21,8 @@
                  style="@GetVesselGridStyle(vessel)"
                  @onclick="@(() => HandleVesselClick(vessel.Id))">
                 <div class="vessel-content">
-                    <VesselIcon 
-                        Width="@vessel.EffectiveWidth" 
+                    <VesselIcon
+                        Width="@vessel.EffectiveWidth"
                         Height="@vessel.EffectiveHeight" />
                 </div>
             </div>

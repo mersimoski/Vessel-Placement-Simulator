@@ -1,7 +1,7 @@
 using BlazorApp.Models;
 using Microsoft.AspNetCore.Components;
 
-namespace BlazorApp.Features.VesselPlacement.Components;
+namespace BlazorApp.Features.VesselPlacement.Components.VesselList;
 
 /// <summary>
 /// A component that displays a list of available vessels that can be dragged to the anchorage.
@@ -38,7 +38,7 @@ public partial class VesselList
     [Parameter]
     public EventCallback<string> OnVesselRotate { get; set; }
 
-    private bool HasVessels => AvailableVessels.Any();
+    private bool HasVessels => AvailableVessels.Count != 0;
 
     private async Task HandleVesselRotate(string vesselId)
     {

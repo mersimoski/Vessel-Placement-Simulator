@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Components;
 
-namespace BlazorApp.Features.VesselPlacement.Components;
+namespace BlazorApp.Features.VesselPlacement.Components.VesselIcon;
 
 /// <summary>
 /// A reusable vessel icon component that renders an SVG representation of a vessel.

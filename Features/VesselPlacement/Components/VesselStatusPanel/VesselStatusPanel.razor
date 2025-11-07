@@ -1,4 +1,4 @@
-@namespace BlazorApp.Features.VesselPlacement.Components
+@namespace BlazorApp.Features.VesselPlacement.Components.VesselStatusPanel
 
 <div class="card">
     <div class="card-header">
@@ -10,7 +10,7 @@
             @foreach (var group in VesselGroups)
             {
                 <p class="mb-1">
-                    <strong>@group.Count</strong> vessel(s) with size 
+                    <strong>@group.Count</strong> vessel(s) with size
                     <strong>(@group.Width × @group.Height)</strong>
                     @if (!string.IsNullOrEmpty(group.Designation))
                     {

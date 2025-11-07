@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Components;
 
-namespace BlazorApp.Features.VesselPlacement.Components;
+namespace BlazorApp.Features.VesselPlacement.Components.ErrorDisplay;
 
 /// <summary>
 /// A reusable error display component with optional retry functionality.

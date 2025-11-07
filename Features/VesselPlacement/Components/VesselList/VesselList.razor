@@ -1,5 +1,4 @@
-@namespace BlazorApp.Features.VesselPlacement.Components
-@using BlazorApp.Components
+@namespace BlazorApp.Features.VesselPlacement.Components.VesselList
 
 <div class="mb-4">
     <div class="d-flex justify-content-between align-items-center mb-2">
@@ -12,7 +11,7 @@
             {
                 @foreach (var vessel in AvailableVessels)
                 {
-                    <DraggableVessel 
+                    <DraggableVessel
                         @key="@vessel.Id"
                         Vessel="@vessel"
                         OnRotate="HandleVesselRotate"

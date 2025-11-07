@@ -8,7 +8,7 @@ namespace BlazorApp.Components;
 /// <summary>
 /// Component that displays the anchorage grid where vessels can be placed.
 /// </summary>
-public partial class AnchorageGrid : IAsyncDisposable
+public sealed partial class AnchorageGrid : IAsyncDisposable
 {
     [Inject] private IJSRuntime JsRuntime { get; set; } = null!;
 
@@ -37,7 +37,7 @@ public partial class AnchorageGrid : IAsyncDisposable
         }
     }
 
-    private string GetVesselGridStyle(PlacedVessel vessel)
+    public string GetVesselGridStyle(PlacedVessel vessel)
     {
         var colStart = vessel.X + 1;
         var colEnd = vessel.X + vessel.EffectiveWidth + 1;
@@ -219,6 +219,7 @@ public partial class AnchorageGrid : IAsyncDisposable
     public ValueTask DisposeAsync()
     {
         dotNetHelper?.Dispose();
+        // ReSharper disable once GCSuppressFinalizeForTypeWithoutDestructor
         GC.SuppressFinalize(this);
         return ValueTask.CompletedTask;
     }

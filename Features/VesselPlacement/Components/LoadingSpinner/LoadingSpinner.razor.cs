@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Components;
 
-namespace BlazorApp.Features.VesselPlacement.Components;
+namespace BlazorApp.Features.VesselPlacement.Components.LoadingSpinner;
 
 /// <summary>
 /// A reusable loading spinner component with customizable message.

@@ -1,7 +1,7 @@
 using BlazorApp.Models;
 using Microsoft.AspNetCore.Components;
 
-namespace BlazorApp.Features.VesselPlacement.Components;
+namespace BlazorApp.Features.VesselPlacement.Components.VesselStatusPanel;
 
 /// <summary>
 /// A component that displays the status of available vessels.
@@ -14,7 +14,7 @@ public partial class VesselStatusPanel
     [Parameter]
     public List<AvailableVessel> AvailableVessels { get; set; } = [];
 
-    private bool HasVessels => AvailableVessels.Any();
+    private bool HasVessels => AvailableVessels.Count != 0;
 
     private int TotalVessels => AvailableVessels.Count;
 

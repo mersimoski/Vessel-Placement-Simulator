@@ -16,20 +16,19 @@ partial class VesselPlacement
     private AnchorageGrid? anchorageGridRef;
 
     // State properties
-    private FleetData? fleetData;
-    private readonly List<PlacedVessel> placedVessels = [];
-    private List<AvailableVessel> availableVessels = [];
-    private bool isLoading = true;
-    private bool isComplete;
-    private string gridElementId = string.Empty;
 
     // Public properties for binding
-    private FleetData? FleetData => fleetData;
-    private List<PlacedVessel> PlacedVessels => placedVessels;
-    private List<AvailableVessel> AvailableVessels => availableVessels;
-    private bool IsLoading => isLoading;
-    private bool IsComplete => isComplete;
-    private string GridElementId => gridElementId;
+    private FleetData? FleetData { get; set; }
+
+    private List<PlacedVessel> PlacedVessels { get; } = [];
+
+    private List<AvailableVessel> AvailableVessels { get; set; } = [];
+
+    private bool IsLoading { get; set; } = true;
+
+    private bool IsComplete { get; set; }
+
+    private string GridElementId { get; set; } = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -43,9 +42,9 @@ partial class VesselPlacement
             // Wait for grid to render, then get the ID
             await Task.Delay(300);
             var newGridId = $"anchorage-grid-{anchorageGridRef.GetHashCode()}";
-            if (newGridId != gridElementId)
+            if (newGridId != GridElementId)
             {
-                gridElementId = newGridId;
+                GridElementId = newGridId;
                 StateHasChanged(); // Trigger vessels to remeasure with new grid ID
             }
         }
@@ -53,42 +52,42 @@ partial class VesselPlacement
 
     private async Task LoadFleetData()
     {
-        isLoading = true;
-        isComplete = false;
-        placedVessels.Clear();
-        availableVessels.Clear();
+        IsLoading = true;
+        IsComplete = false;
+        PlacedVessels.Clear();
+        AvailableVessels.Clear();
 
         try
         {
-            fleetData = await FleetApiService.GetRandomFleetAsync();
-            if (fleetData != null)
+            FleetData = await FleetApiService.GetRandomFleetAsync();
+            if (FleetData != null)
             {
                 InitializeVessels();
             }
         }
         catch (Exception)
         {
-            fleetData = null;
+            FleetData = null;
         }
         finally
         {
-            isLoading = false;
+            IsLoading = false;
             StateHasChanged();
         }
     }
 
     private void InitializeVessels()
     {
-        if (fleetData == null) return;
+        if (FleetData == null) return;
 
         var random = new Random();
-        availableVessels.Clear();
+        AvailableVessels.Clear();
 
-        var canvasWidth = fleetData.AnchorageSize.Width;
-        var canvasHeight = fleetData.AnchorageSize.Height;
+        var canvasWidth = FleetData.AnchorageSize.Width;
+        var canvasHeight = FleetData.AnchorageSize.Height;
 
         // If no fleets from API, return empty list
-        if (fleetData.Fleets.Count == 0)
+        if (FleetData.Fleets.Count == 0)
         {
             return;
         }
@@ -96,7 +95,7 @@ partial class VesselPlacement
         // Create vessels based on the API response - use exact dimensions from API
         var allVessels = new List<AvailableVessel>();
 
-        foreach (var fleet in fleetData.Fleets)
+        foreach (var fleet in FleetData.Fleets)
         {
             var dimensions = fleet.SingleShipDimensions;
             var designation = fleet.ShipDesignation;
@@ -144,30 +143,30 @@ partial class VesselPlacement
         }
 
         // Shuffle all vessels to randomize their order
-        availableVessels = allVessels.OrderBy(_ => random.Next()).ToList();
+        AvailableVessels = allVessels.OrderBy(_ => random.Next()).ToList();
     }
 
     private void HandleVesselPlaced(PlacedVessel vessel)
     {
         // Check if vessel is already placed
-        if (placedVessels.Any(pv => pv.Id == vessel.Id))
+        if (PlacedVessels.Any(pv => pv.Id == vessel.Id))
         {
             return;
         }
 
         // Remove the vessel from available vessels by matching ID
-        var availableVessel = availableVessels.FirstOrDefault(v => v.Id == vessel.Id);
+        var availableVessel = AvailableVessels.FirstOrDefault(v => v.Id == vessel.Id);
         if (availableVessel != null)
         {
-            availableVessels.Remove(availableVessel);
-            placedVessels.Add(vessel);
+            AvailableVessels.Remove(availableVessel);
+            PlacedVessels.Add(vessel);
             CheckCompletion();
         }
         else
         {
             // Don't add if already placed or not found in available
-            if (placedVessels.Any(pv => pv.Id == vessel.Id)) return;
-            placedVessels.Add(vessel);
+            if (PlacedVessels.Any(pv => pv.Id == vessel.Id)) return;
+            PlacedVessels.Add(vessel);
         }
 
         StateHasChanged();
@@ -175,11 +174,11 @@ partial class VesselPlacement
 
     private void HandleVesselRemoved(string vesselId)
     {
-        var vessel = placedVessels.FirstOrDefault(v => v.Id == vesselId);
+        var vessel = PlacedVessels.FirstOrDefault(v => v.Id == vesselId);
         if (vessel == null) return;
-        placedVessels.Remove(vessel);
+        PlacedVessels.Remove(vessel);
         // Add back to available vessels
-        availableVessels.Add(new AvailableVessel
+        AvailableVessels.Add(new AvailableVessel
         {
             Id = vesselId,
             Dimensions = vessel.Dimensions,
@@ -192,7 +191,7 @@ partial class VesselPlacement
 
     private void HandleVesselRotate(string vesselId)
     {
-        var vessel = availableVessels.FirstOrDefault(v => v.Id == vesselId);
+        var vessel = AvailableVessels.FirstOrDefault(v => v.Id == vesselId);
         if (vessel == null) return;
         vessel.IsRotated = !vessel.IsRotated;
         StateHasChanged();
@@ -200,7 +199,7 @@ partial class VesselPlacement
 
     private void CheckCompletion()
     {
-        isComplete = availableVessels.Count == 0 && fleetData != null;
+        IsComplete = AvailableVessels.Count == 0 && FleetData != null;
     }
 
     private async Task ResetAndLoadNewFleet()

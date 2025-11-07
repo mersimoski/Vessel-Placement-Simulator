@@ -1,5 +1,4 @@
 @namespace BlazorApp.Components
-@using BlazorApp.Features.VesselPlacement.Components
 
 <div class="vessel-card-wrapper mb-3">
     <div class="vessel-info mb-1">
@@ -18,8 +17,8 @@
          @ref="vesselElement"
          data-vessel-id="@Vessel.Id"
          style="@VesselCardStyle">
-        <VesselIcon 
-            Width="@Vessel.EffectiveWidth" 
+        <VesselIcon
+            Width="@Vessel.EffectiveWidth"
             Height="@Vessel.EffectiveHeight" />
     </div>
 </div>
