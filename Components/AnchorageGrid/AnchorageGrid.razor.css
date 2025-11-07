@@ -80,11 +80,11 @@
     pointer-events: none; /* Allow mouse events to pass through to grid cells */
     margin: 0;
     padding: 0;
+    overflow: hidden;
 }
 
 .placed-vessel:hover {
     opacity: 0.85;
-    transform: scale(1.02);
 }
 
 .vessel-content {
@@ -93,10 +93,11 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 1px;
+    padding: 0;
     background-color: rgba(255, 255, 255, 0.95);
+    border: none;
+    outline: 2px solid #dc3545; /* visual border without affecting size */
     border-radius: 2px;
-    border: 2px solid #dc3545;
     box-sizing: border-box;
     overflow: hidden;
     pointer-events: auto; /* Vessel content is clickable for removal */

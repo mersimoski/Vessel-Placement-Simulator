@@ -18,6 +18,7 @@ public partial class DraggableVessel : IAsyncDisposable
     [Parameter] public int AnchorageWidth { get; set; } = 12;
     [Parameter] public int AnchorageHeight { get; set; } = 15;
     [Parameter] public string GridElementId { get; set; } = string.Empty;
+    [Parameter] public string BorderColor { get; set; } = "#dee2e6";
 
     private string? lastVesselData;
     private double cardWidth = 100;
@@ -25,7 +26,10 @@ public partial class DraggableVessel : IAsyncDisposable
     private string? lastGridElementId;
 
     private string VesselCardStyle => 
-        $"width: {cardWidth}px; height: {cardHeight}px; min-width: {cardWidth}px; min-height: {cardHeight}px;";
+        $"width: {cardWidth}px; height: {cardHeight}px; min-width: {cardWidth}px; min-height: {cardHeight}px; border-color: {BorderColor};";
+
+    private string TooltipText =>
+        $"{Vessel.Designation} ({Vessel.Dimensions.Width} × {Vessel.Dimensions.Height})";
 
     private string VesselData => 
         $"{Vessel.Id}|{Vessel.EffectiveWidth}|{Vessel.EffectiveHeight}|{Vessel.IsRotated}|{Vessel.Designation}";
@@ -81,10 +85,10 @@ public partial class DraggableVessel : IAsyncDisposable
                 
                 // Use the average of width and height to ensure square cells
                 var cellSizeAvg = (cellSize.Width + cellSize.Height) / 2.0;
-                // Scale up by 1.3x to make vessels more visible
-                const double scaleFactor = 1.3;
-                cardWidth = Vessel.EffectiveWidth * cellSizeAvg * scaleFactor;
-                cardHeight = Vessel.EffectiveHeight * cellSizeAvg * scaleFactor;
+                    // Use scaleFactor = 1.0 to match canvas grid cell size
+                    const double scaleFactor = 1.0;
+                    cardWidth = Vessel.EffectiveWidth * cellSizeAvg * scaleFactor;
+                    cardHeight = Vessel.EffectiveHeight * cellSizeAvg * scaleFactor;
 
                 StateHasChanged();
 
@@ -107,8 +111,8 @@ public partial class DraggableVessel : IAsyncDisposable
     {
         const double gridHeightPx = 500.0;
         var cellSize = gridHeightPx / Math.Max(1, AnchorageHeight);
-        // Scale up by 1.3x to make vessels more visible
-        const double scaleFactor = 1.3;
+        // Use scaleFactor = 1.0 to match canvas grid cell size
+        const double scaleFactor = 1.0;
         cardWidth = Vessel.EffectiveWidth * cellSize * scaleFactor;
         cardHeight = Vessel.EffectiveHeight * cellSize * scaleFactor;
     }

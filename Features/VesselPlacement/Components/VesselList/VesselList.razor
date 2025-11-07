@@ -6,10 +6,10 @@
         <small class="text-muted">Drag to place • Double-click to rotate</small>
     </div>
     <div class="vessel-list-container">
-        <div class="d-flex flex-column gap-3">
+        <div class="vessel-grid">
             @if (HasVessels)
             {
-                @foreach (var vessel in AvailableVessels)
+                @foreach (var vessel in SortedVessels)
                 {
                     <DraggableVessel
                         @key="@vessel.Id"
@@ -17,7 +17,8 @@
                         OnRotate="HandleVesselRotate"
                         AnchorageWidth="@AnchorageWidth"
                         AnchorageHeight="@AnchorageHeight"
-                        GridElementId="@GridElementId" />
+                        GridElementId="@GridElementId"
+                        BorderColor="@GetVesselColor(vessel.Id)" />
                 }
             }
             else

@@ -1,17 +1,8 @@
-.vessel-card-wrapper {
-    display: flex;
-    flex-direction: column;
-}
-
-.vessel-info {
-    font-size: 0.9rem;
-}
-
 .vessel-card {
     cursor: grab;
     transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
     user-select: none;
-    border: 2px solid #dee2e6;
+    border: 3px solid;
     border-radius: 4px;
     background-color: #f8f9fa;
     padding: 0;
@@ -21,12 +12,11 @@
     justify-content: center;
     box-sizing: border-box;
     overflow: hidden;
+    flex-shrink: 0;
 }
 
 .vessel-card:hover {
-    transform: translateY(-3px);
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-    border-color: #0d6efd;
 }
 
 .vessel-card:active {
